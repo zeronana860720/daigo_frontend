@@ -41,7 +41,7 @@
         <div class="label">我的頭像</div>
         <div class="value">
             <div class="avatar-wrapper" :class="{ 'is-editable': isEditing }" @click="triggerUpload">
-            <img :src="getImageUrl(avatarPreview)" class="avatar-img">
+            <img :src="getImageUrl(avatarPreview)" class="avatar-img" alt="nnn">
             <div v-if="isEditing" class="avatar-hint">更換</div>
           </div>
           <input type="file" ref="fileInput" accept="image/*" @change="onFileSelect" style="display: none" />
@@ -130,6 +130,7 @@ onMounted(async () => {
     // 將後端資料填入畫面
     Object.assign(editData, res.data);
     avatarPreview.value = res.data.avatar || '';
+    console.log(res.data.avatar);
 
     // 建立備份
     backupData = JSON.parse(JSON.stringify(editData));

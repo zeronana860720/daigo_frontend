@@ -30,12 +30,12 @@
             <label>商品參考圖片</label>
             <div class="upload-container">
               <input type="file" accept="image/*" @change="handleImageUpload" ref="fileInputRef" style="display: none">
-              <div v-if="!imagePreview" class="upload-placeholder" @click="$refs.fileInputRef.click()">
+              <div v-if="!imagePreview" class="upload-placeholder" @click="() => fileInputRef?.click()">
                 <span class="plus-icon">+</span>
                 <span>上傳參考圖片</span>
               </div>
               <div v-else class="image-preview-wrapper">
-                <img :src="imagePreview" class="preview-img" alt="nnn">
+                <img :src="getImageUrl(cachedData.name)" class="preview-img" alt="nnn">
                 <button type="button" class="remove-btn" @click="removeImage">✕</button>
               </div>
             </div>
@@ -58,8 +58,8 @@
 
       <div v-if="selectedPlace" class="map-overlay-info">
         <div class="info-header">
-          <span class="pin-icon">📍</span>
-          <strong>已選地點</strong>
+          <img class="pin-icon" :src="getImageUrl(cachedData.avatar )" alt="nnn">
+          <strong>參考地點</strong>
         </div>
         <div class="place-name">{{ selectedPlace.name }}</div>
         <div class="place-address">{{ selectedPlace.address }}</div>
@@ -70,15 +70,17 @@
 
 <script setup lang="ts">
 // 引入需要的功能
-import { ref as vueRef, onMounted } from 'vue';
+import {ref as vueRef, onMounted} from 'vue';
 // as vueRef -> googleMap 也有ref怕命名搞混
 // 路由器
 import { useRouter } from 'vue-router';
 import { useCommissionStore } from '@/stores/commission';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import axios from "axios";
 // setOptions -> 設定金鑰...
 // importLibrary -> 動態載入googleMap的各項功能
 
+const fileInputRef = vueRef<HTMLInputElement | null>(null);
 
 const router = useRouter(); // 路由器實例
 const commissionStore = useCommissionStore(); // commissionStore實例
@@ -94,6 +96,25 @@ const form = vueRef({
   endDate: ''
 });
 // 建立一個響應式物件
+const avatar = vueRef('')
+
+
+// 先從cachedData 顯示舊圖片
+const cachedData = {
+  avatar:localStorage.getItem('userAvatar')
+}
+
+
+const  getImageUrl = (path: string|null) => {
+  if(!path) return 'https://i.imgur.com/6VBx3io.png';
+  // 沒有圖給預設圖
+  // 如果是 blob: 開頭（剛裁切完的暫時預覽）或是 data: 開頭（Base64），直接回傳
+  if (path.startsWith('blob:') || path.startsWith('data:')) {
+    return path;
+  }
+  return `http://localhost:5275${path}`;
+}
+
 
 // --- 圖片預覽與上傳邏輯 ---
 const imagePreview = vueRef<string | null>(null);
@@ -156,7 +177,6 @@ let marker: any = null;
 
 onMounted(async () => {
   // google地圖載入需要時間 -> async 非同步處理
-  console.log('API Key:', import.meta.env.VITE_GOOGLE_MAP_API_KEY);
   try {
     // 1. 設定 API 金鑰
     setOptions({
@@ -246,6 +266,16 @@ onMounted(async () => {
   } catch (err) {
     console.error("地圖載入失敗:", err);
     alert("地圖載入失敗");
+  }
+  try {
+      const token = localStorage.getItem('token');
+      const res  = await axios.get('/api/Auth/profile',{
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    cachedData.avatar = res.data.avatar;
+  }
+  catch (error) {
+
   }
 });
 
@@ -518,8 +548,18 @@ body {
 }
 
 .pin-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
   font-size: 24px;
   animation: bounce 2s infinite;
+  transition: all 0.3s ease;
+}
+.pin-icon:hover {
+  border: 2px solid #fb7299;  /* 綠色外框,可以改成你喜歡的顏色 */
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);  /* 發光效果 */
+  transform: scale(1.4);  /* 放大 10% */
 }
 
 /* 🎈 圖示跳動動畫 */
