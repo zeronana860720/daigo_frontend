@@ -515,7 +515,7 @@ body {
   max-width: 360px;
   border: 2px solid #fb7299;
   backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.2s cubic-bezier(1,0,0,.99);
   animation: slideIn 0.5s ease-out;
 }
 
@@ -550,11 +550,11 @@ body {
 .pin-icon {
   width: 50px;
   height: 50px;
-  border: 2px solid #fb7299;  /* 人頭外框*/
+  border: 1px solid #fb7299;  /* 人頭外框*/
   border-radius: 50%;
   object-fit: cover;
   font-size: 24px;
-  animation: bounce 1.5s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: bounce 1.5s infinite cubic-bezier(0,.96,.54,.98);
   transition: all 0.3s ease;
 }
 .pin-icon:hover {
