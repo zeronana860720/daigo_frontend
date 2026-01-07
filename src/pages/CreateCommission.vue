@@ -35,7 +35,7 @@
                 <span>上傳參考圖片</span>
               </div>
               <div v-else class="image-preview-wrapper">
-                <img :src="imagePreview" class="preview-img">
+                <img :src="imagePreview" class="preview-img" alt="nnn">
                 <button type="button" class="remove-btn" @click="removeImage">✕</button>
               </div>
             </div>
@@ -156,10 +156,11 @@ let marker: any = null;
 
 onMounted(async () => {
   // google地圖載入需要時間 -> async 非同步處理
+  console.log('API Key:', import.meta.env.VITE_GOOGLE_MAP_API_KEY);
   try {
     // 1. 設定 API 金鑰
     setOptions({
-      key: "AIzaSyBNt41afSWDPc5J-2uVzShIKN2JlGoKsEE",
+      key:import.meta.env.VITE_GOOGLE_MAP_API_KEY,
       // 金鑰
       v: "weekly"
       // weekly -> 使用每週更新最新版
