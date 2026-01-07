@@ -507,13 +507,13 @@ body {
   left: 25px;
   background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
   padding: 22px 30px;
-  border-radius: 20px;
+  border-radius: 10px;
   box-shadow:
       0 15px 50px rgba(251, 114, 153, 0.35),
       0 5px 20px rgba(251, 114, 153, 0.2);
   z-index: 10;
   max-width: 360px;
-  border: 4px solid #fb7299;
+  border: 2px solid #fb7299;
   backdrop-filter: blur(12px);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   animation: slideIn 0.5s ease-out;
@@ -548,21 +548,22 @@ body {
 }
 
 .pin-icon {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
+  border: 2px solid #fb7299;  /* 人頭外框*/
   border-radius: 50%;
   object-fit: cover;
   font-size: 24px;
-  animation: bounce 2s infinite;
+  animation: bounce 1.5s infinite cubic-bezier(0.68, -0.55, 0.265, 1.55);
   transition: all 0.3s ease;
 }
 .pin-icon:hover {
-  border: 2px solid #fb7299;  /* 綠色外框,可以改成你喜歡的顏色 */
+
   box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);  /* 發光效果 */
   transform: scale(1.4);  /* 放大 10% */
 }
 
-/* 🎈 圖示跳動動畫 */
+/* avatar圖示跳動動畫 */
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);
