@@ -255,7 +255,8 @@ onMounted(async () => {
     setOptions({
       key:import.meta.env.VITE_GOOGLE_MAP_API_KEY,
       // 金鑰
-      v: "weekly"
+      v: "weekly",
+      language: "en-US",
       // weekly -> 使用每週更新最新版
     });
 
