@@ -88,6 +88,11 @@ const routes:RouteRecordRaw[] = [
                 path:'walletLogs',
                 name:'WalletLogs',
                 component:()=>import('../pages/user/WalletLogs.vue')
+            },
+            {
+                path:'messageBox',
+                name:'MessageBox',
+                component:()=>import('../pages/user/MessageBox.vue')
             }
 
         ]

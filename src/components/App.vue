@@ -63,7 +63,7 @@
               <li @click="navigateTo('/user/orders')"><span>訂單管理</span> <i class="arrow">〉</i></li>
               <li @click="navigateTo('/user/commissions')"><span>委託管理</span> <i class="arrow">〉</i></li>
               <li @click="navigateTo('/user/shops')"><span>賣場管理</span> <i class="arrow">〉</i></li>
-              <li><span>訊息中心</span> <i class="arrow">〉</i></li>
+              <li @click="navigateTo('/user/messageBox')"><span>訊息中心</span> <i class="arrow">〉</i></li>
             </ul>
             <div class="card-footer">
               <div class="logout-item" @click="handleLogout">登出帳號</div>

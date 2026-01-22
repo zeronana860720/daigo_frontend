@@ -31,6 +31,11 @@
             <i class="icon-dot"></i>
             <span class="menu-text">賣場管理</span>
           </router-link>
+          <router-link to="/user/messageBox" class="menu-item">
+            <i class="icon-dot"></i>
+            <span class="menu-text">訊息中心</span>
+          </router-link>
+
           <div class="menu-group">
             <div class="menu-item" @click="toggleWallet">
               <i class="icon-dot"></i>
