@@ -153,7 +153,9 @@ const fetchChatRooms = async () => {
 
       // 2. 改成抓後端的 "PartnerAvatar" (對方頭像)
       //    邏輯：如果有頭像就用，沒有的話就給一張預設的灰人圖
-      avatar: `http://localhost:5275${room.partnerAvatar}` || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+      avatar: room.partnerAvatar
+          ? `http://localhost:5275${room.partnerAvatar}`
+          : 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
       // 要改成後端的網址圖片才不會壞掉
       lastMessage: '',
       lastTime: new Date(room.createdAt).toLocaleDateString(), // 順便幫你補上顯示時間
