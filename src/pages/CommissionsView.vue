@@ -25,11 +25,16 @@
       <div class="filter-group">
         <h4 class="group-title">熱門地點</h4>
         <ul class="filter-list">
-          <li v-for="loc in ['東京', '北海道', '京都', '大阪']" :key="loc" class="filter-item">
+          <li v-for="loc in locationOptions" :key="loc.value" class="filter-item">
             <label class="checkbox-container">
-              <input type="checkbox" :value="loc" v-model="filterLocations">
+              <input
+                  type="radio"
+                  name="location-group"
+                  :value="loc.value"
+                  v-model="filterLocations"
+              >
               <span class="checkmark"></span>
-              {{ loc }}
+              {{ loc.label }}
             </label>
           </li>
         </ul>
@@ -94,14 +99,30 @@
   const router = useRouter();
   const route = useRoute();
 
+  // 變數
+  // ✨ 第一步：先把所有會用到的「變數」通通定義好 ✨
+  const searchKeyword = ref((route.query.keyword as string) || '');
+  const currentSort = ref('');
+  const filterLocations = ref<string>('');
+  const minPrice = ref<number | null>(null);
+  const maxPrice = ref<number | null>(null);
+
   // 初始化 Store
   const commissionStore = useCommissionStore();
 
+  // 在 script 區塊內定義地點選項
+  const locationOptions = [
+    { label: '東京', value: 'tokyo' },
+    { label: '北海道', value: 'hokkaido' },
+    { label: '京都', value: 'kyoto' },
+    { label: '大阪', value: 'osaka' }
+  ];
+
   // 當頁面載入完成時，主動去抓取資料
   onMounted(async () => {
-    // 2. 從網址取得 keyword，傳給 Store 的 fetch 函數
     const keyword = (route.query.keyword as string) || '';
-    await commissionStore.fetchCommissions(keyword);
+    // ✨ 改成傳送物件格式，與進階搜尋一致
+    await commissionStore.fetchCommissions({ keyword });
   });
 
   // 定義一個簡單的日期格式化工具
@@ -122,22 +143,35 @@
   };
 
   // 監聽網址參數的變化
+  // 監聽網址參數的變化
   watch(() => route.query.keyword, (newKeyword) => {
-    // 只要關鍵字一變，就立刻重新抓取資料
-    commissionStore.fetchCommissions(newKeyword as string || '');
+    // ✨ 改成傳送物件格式
+    commissionStore.fetchCommissions({
+      keyword: (newKeyword as string) || ''
+    });
   });
-
-  // 把原本的 filterLocation = ref('') 改成陣列
-  const filterLocations = ref<string[]>([]);
 
   // 在 resetFilters 也要記得清空陣列喔
   const resetFilters = () => {
     searchKeyword.value = '';
     currentSort.value = '';
-    filterLocations.value = []; // 清空陣列
+    filterLocations.value = ''; // 清空陣列
     minPrice.value = null;
     maxPrice.value = null;
     handleFilterSearch();
+  };
+
+  // 3. 修改搜尋邏輯：直接帶入字串
+  const handleFilterSearch = async () => {
+    const params = {
+      keyword: searchKeyword.value,
+      location: filterLocations.value, // 直接傳送 'tokyo', 'osaka' 等字串
+      minPrice: minPrice.value,
+      maxPrice: maxPrice.value,
+      sort: currentSort.value
+    };
+
+    await commissionStore.fetchCommissions(params);
   };
   </script>
 

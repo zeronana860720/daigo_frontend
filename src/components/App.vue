@@ -85,10 +85,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from '@/stores/auth';
+import {useCommissionStore} from "@/stores/commission";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const commissionStore = useCommissionStore();
 
 // 使用 computed 從 store 取得狀態（響應式）
 const isLoggedIn = computed(() => authStore.isLoggedIn);
@@ -143,21 +145,19 @@ const getImageUrl = (path: string) => {
 // 建立一個空字串儲存搜尋字串
 const searchKeyword = ref('');
 
-const handleSearch =()=>{
+const handleSearch = () => {
+  // 跳轉到委託頁面，這部分不變
   router.push({
-    path:'/commissions',
-    query:{keyword:searchKeyword.value},
-    // query -> 固定關鍵字,它的作用是在網址（URL）後面加上問號 ? 開頭的參數（稱為 Query String）
-    // 因為後端參數是這樣 ?參數就要用:query
-    /*
-    * [FromQuery] string? keyword,      // 關鍵字 (Title, Description...)
-      [FromQuery] string? location,     // 地區篩選
-      [FromQuery] decimal? minPrice,    // 價格下限
-      [FromQuery] decimal? maxPrice,    // 價格上限
-      [FromQuery] string? sort = null   // 多重排序 (如: "price_asc,deadline_desc"
-    * */
+    path: '/commissions',
+    query: { keyword: searchKeyword.value }
   });
-}
+
+  // ✨ 重點：如果要在這裡直接呼叫 store（例如已經在同頁面時）
+  // 傳進去的必須是一個「物件」喔！
+  commissionStore.fetchCommissions({
+    keyword: searchKeyword.value
+  });
+};
 </script>
 
 
