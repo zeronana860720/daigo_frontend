@@ -15,26 +15,32 @@ export const useCommissionStore = defineStore('commission', {
     // 2. Actions：用來執行非同步操作（如呼叫 API）的「動作」
     actions: {
         // 加上 keyword 參數，預設是空字串
-        async fetchCommissions(keyword: string = '') {
+        // 讓函數接收一個 params 物件
+        async fetchCommissions(params: any = {}) {
+            // ✨ 新增這行防呆：如果傳進來的是字串，自動幫它轉成物件格式
+            const searchParams = typeof params === 'string' ? { keyword: params } : params;
+
             this.loading = true;
             try {
                 const token = localStorage.getItem('token');
 
-                // 根據有沒有關鍵字來決定網址
-                // 如果有關鍵字就走 /search，沒有就走原本的列表
-                const url = keyword
+                // 判斷：使用處理過的 searchParams
+                const isSearching = searchParams.keyword || searchParams.location || searchParams.minPrice || searchParams.maxPrice || searchParams.sort;
+
+                const url = isSearching
                     ? 'http://127.0.0.1:5275/api/Filter/search'
                     : 'http://127.0.0.1:5275/api/Commissions';
 
                 const response = await axios.get(url, {
                     headers: { Authorization: `Bearer ${token}` },
-                    params: { keyword: keyword } // axios 會幫妳處理成 ?keyword=xxx
+                    // ✨ 核心修改：傳入處理後的 searchParams 物件
+                    params: searchParams
                 });
 
-                // 統一存入 commissions
                 this.commissions = response.data.data;
+                console.log(response.data.data);
             } catch (error) {
-                console.error('抓取委託清單失敗:', error);
+                console.error('篩選委託失敗:', error);
             } finally {
                 this.loading = false;
             }
