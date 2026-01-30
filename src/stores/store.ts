@@ -35,14 +35,12 @@ export const useStoreStore = defineStore('store', {
         },
 
         // 建立賣場
-        // 1. 修改接收的型別為 FormData
         async createStore(formData: FormData) {
             try {
                 const token = localStorage.getItem('token');
                 const response = await axios.post('http://127.0.0.1:5275/api/createstore/my/store', formData, {
                     headers: {
                         Authorization: `Bearer ${token}`
-                        // 2. 把 'Content-Type' 那一行刪掉，讓瀏覽器自動處理就好囉！✧
                     }
                 });
 
@@ -52,12 +50,12 @@ export const useStoreStore = defineStore('store', {
                 throw error.response?.data || { message: '建立失敗' };
             }
         },
-        // ✨ 新增:送出賣場審核
+
+        // 送出賣場審核
         async submitStoreForReview(storeId: number) {
             try {
                 const token = localStorage.getItem('token');
 
-                // ✨ 改用 Promise.reject
                 if (!token) {
                     return Promise.reject({ message: '請先登入' });
                 }
@@ -75,7 +73,64 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '送出審核失敗' };
             }
+        },
+
+        // ✨ 新增:建立商品
+        // ✨ 新增:建立商品
+        async createProduct(storeId: number, productData: any) {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    return Promise.reject({ message: '請先登入' });
+                }
+
+                const formData = new FormData();
+
+                // 基本資料
+                formData.append('ProductName', productData.productName);
+                formData.append('Price', productData.price.toString());
+                formData.append('Quantity', productData.quantity.toString());
+                formData.append('Description', productData.description);
+                formData.append('EndDate', productData.endDate);
+
+                // Category
+                if (productData.category) {
+                    formData.append('Category', productData.category);
+                }
+
+                // 圖片檔案
+                if (productData.imageFile) {
+                    formData.append('Image', productData.imageFile);
+                }
+
+                // 地點資料
+                if (productData.google_place_id) {
+                    formData.append('GooglePlaceId', productData.google_place_id);
+                    formData.append('LocationName', productData.location || '');
+                    formData.append('FormattedAddress', productData.formatted_address || '');
+                    formData.append('Latitude', productData.latitude.toString());
+                    formData.append('Longitude', productData.longitude.toString());
+                }
+
+                // ✓ 改:改成跟其他方法一樣用 createstore
+                const response = await axios.post(
+                    `http://127.0.0.1:5275/api/createstore/${storeId}/products`,
+                    //                              ^^^^^^^^^^^ 改成 createstore
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '新增商品失敗' };
+            }
         }
+
 
 
     }

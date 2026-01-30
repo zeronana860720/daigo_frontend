@@ -237,8 +237,10 @@ const getProductStatusClass = (status: number) => {
 
 // --- 操作函式 ---
 const openAddProductModal = () => {
-  showAddProductModal.value = true;
+  // showAddProductModal.value = true;
+  router.push(`/store/${storeId.value}/product/create`);
 };
+
 
 const handleProductClick = (productId: number) => {
   console.log('點擊商品:', productId);
