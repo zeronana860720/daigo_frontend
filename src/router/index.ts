@@ -58,6 +58,12 @@ const routes:RouteRecordRaw[] = [
         name: 'StoreManage',
         component: () => import('../pages/user/StoreManage.vue')
     },
+    // 創建商品路由
+    {
+        path: '/store/:storeId/product/create',
+        name: 'CreateProduct',
+        component: () => import('../pages/CreateProduct.vue')
+    },
     // --- 新增：會員中心嵌套路由 ---
     {
         path: '/user',
