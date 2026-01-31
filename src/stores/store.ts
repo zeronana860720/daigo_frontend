@@ -129,7 +129,25 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '新增商品失敗' };
             }
+        },
+
+        // 取得賣場商品列表
+        async fetchStoreProducts(storeId: number) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(
+                    `http://127.0.0.1:5275/api/createstore/${storeId}/products`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+                console.log(response.data);
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '取得商品失敗' };
+            }
         }
+
 
 
 

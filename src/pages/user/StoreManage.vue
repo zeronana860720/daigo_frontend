@@ -10,10 +10,13 @@
       <div class="store-left">
         <div class="store-image-box">
           <img
-              :src="getStoreImageUrl(currentStore?.storeImage)"
+              :src="currentStore?.storeImage
+          ? `http://127.0.0.1:5275${currentStore.storeImage}`
+          : defaultImage"
               :alt="currentStore?.storeName"
               class="store-cover"
           >
+
         </div>
         <div class="store-basic">
           <h2 class="store-name">{{ currentStore?.storeName }}</h2>
@@ -58,11 +61,46 @@
           新增商品
         </button>
       </div>
+      <!-- 篩選按鈕區 -->
+      <!-- 篩選按鈕區 -->
+      <div class="tab-switcher">
+        <div class="tab-group">
+          <button
+              :class="['switch-btn', { active: activeFilter === 'all' }]"
+              @click="setFilter('all')"
+          >
+            全部
+          </button>
+          <button
+              :class="['switch-btn', { active: activeFilter === 'on-sale' }]"
+              @click="setFilter('on-sale')"
+          >
+            已上架
+          </button>
+        </div>
+
+        <div class="tab-group">
+          <button
+              :class="['switch-btn', { active: activeFilter === 'pending' }]"
+              @click="setFilter('pending')"
+          >
+            審核中
+          </button>
+          <button
+              :class="['switch-btn', { active: activeFilter === 'failed' }]"
+              @click="setFilter('failed')"
+          >
+            審核失敗
+          </button>
+        </div>
+      </div>
+
+
 
       <!-- 商品網格 (4格) -->
       <div class="products-grid">
         <div
-            v-for="product in products"
+            v-for="product in filteredProducts"
             :key="product.productId"
             class="product-card"
             @click="handleProductClick(product.productId)"
@@ -72,9 +110,10 @@
                 :src="product.imageUrl || defaultProductImage"
                 :alt="product.productName"
             >
-            <span class="product-status-tag" :class="getProductStatusClass(product.status)">
-              {{ getProductStatusLabel(product.status) }}
-            </span>
+            <!-- ✓ 這裡改成傳整個 product -->
+            <span class="product-status-tag" :class="getProductStatusClass(product)">
+        {{ getProductStatusLabel(product) }}
+      </span>
           </div>
 
           <div class="product-body">
@@ -91,6 +130,7 @@
           </div>
         </div>
       </div>
+
 
       <!-- 空狀態 -->
       <div v-if="products.length === 0" class="empty-state">
@@ -146,6 +186,51 @@ const editStoreForm = ref({
 const defaultImage = 'https://i.pinimg.com/1200x/f7/d1/36/f7d136d44bbad6846e1385711a6a634b.jpg';
 const defaultProductImage = 'https://i.imgur.com/6VBx3io.png';
 
+// 篩選狀態
+const activeFilter = ref<string>('all'); // 'all', 'on-sale', 'off-sale', 'draft', 'pending', 'failed'
+
+// 篩選商品
+// 篩選商品
+const filteredProducts = computed(() => {
+  if (activeFilter.value === 'all') return products.value;
+
+  return products.value.filter(product => {
+    // 草稿
+    if (activeFilter.value === 'draft') {
+      return product.status === 0;
+    }
+
+    // 審核中
+    if (activeFilter.value === 'pending') {
+      return product.status === 1;
+    }
+
+    // 審核失敗
+    if (activeFilter.value === 'failed') {
+      return product.status === 2;
+    }
+
+    // 已上架 (審核通過 且 isActive = true)
+    if (activeFilter.value === 'on-sale') {
+      return product.status === 3 && product.isActive === true;
+    }
+
+    // 已下架 (審核通過 且 isActive = false)
+    if (activeFilter.value === 'off-sale') {
+      return product.status === 3 && product.isActive === false;
+    }
+
+    return false;
+  });
+});
+
+
+// 切換篩選
+const setFilter = (filter: string) => {
+  activeFilter.value = filter;
+};
+
+
 // --- 生命週期 ---
 onMounted(async () => {
   await loadStoreData();
@@ -165,27 +250,26 @@ const loadStoreData = async () => {
 };
 
 const loadProducts = async () => {
-  // TODO: 之後改成呼叫商品 API
-  // 現在先用假資料示範
-  products.value = [
-    {
-      productId: 1,
-      productName: '日本零食福袋',
-      price: 599,
-      stock: 15,
-      status: 1, // 1:上架中, 0:下架
-      imageUrl: 'https://i.imgur.com/6VBx3io.png'
-    },
-    {
-      productId: 2,
-      productName: '東京限定草莓巧克力',
-      price: 299,
-      stock: 0,
-      status: 0,
-      imageUrl: 'https://i.imgur.com/6VBx3io.png'
-    }
-  ];
+  try {
+    // 呼叫 API 取得商品列表
+    const response = await store.fetchStoreProducts(storeId.value);
+
+    // 將 API 回傳的商品資料轉換成前端需要的格式
+    products.value = response.products.map((p: any) => ({
+      productId: p.productId,
+      productName: p.productName,
+      price: p.price,
+      stock: p.quantity,  // ← 後端叫 quantity,前端叫 stock
+      status: p.status,   // 0:草稿, 1:審核中, 2:審核失敗, 3:已發布
+      isActive: p.isActive,  // true:上架, false:下架
+      imageUrl: p.imagePath ? `http://127.0.0.1:5275${p.imagePath}` : null
+    }));
+  } catch (error) {
+    console.error('載入商品失敗:', error);
+    alert('載入商品失敗');
+  }
 };
+
 
 // --- 輔助函式 ---
 const getStoreImageUrl = (path: string | undefined) => {
@@ -227,12 +311,32 @@ const getStatusClass = (status: number | undefined) => {
   }
 };
 
-const getProductStatusLabel = (status: number) => {
-  return status === 1 ? '上架中' : '已下架';
+const getProductStatusLabel = (product: any) => {
+  // 先判斷審核狀態
+  if (product.status === 0) return '草稿';
+  if (product.status === 1) return '審核中';
+  if (product.status === 2) return '審核失敗';
+
+  // 審核通過 (status === 3) 才看上下架狀態
+  if (product.status === 3) {
+    return product.isActive ? '已上架' : '已下架';
+  }
+
+  return '未知';
 };
 
-const getProductStatusClass = (status: number) => {
-  return status === 1 ? 'on-sale' : 'off-sale';
+// 商品狀態樣式
+const getProductStatusClass = (product: any) => {
+  if (product.status === 0) return 'draft';        // 草稿 - 藍色
+  if (product.status === 1) return 'pending';      // 審核中 - 橘色
+  if (product.status === 2) return 'failed';       // 審核失敗 - 灰色
+
+  // 審核通過才看上下架
+  if (product.status === 3) {
+    return product.isActive ? 'on-sale' : 'off-sale';
+  }
+
+  return 'pending';
 };
 
 // --- 操作函式 ---
@@ -274,8 +378,8 @@ const handleSubmitReview = async () => {
 
 <style scoped>
 .store-manage-page {
-  max-width: 95%;
-  margin: 120px auto 40px;
+  max-width: 100%;
+  margin: 110px auto 20px;
   padding: 0 20px;
   font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
 }
@@ -443,8 +547,8 @@ const handleSubmitReview = async () => {
 /* --- 商品網格 (4格) --- */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(6, 1fr);  /* 改成 5 個 */
+  gap: 16px;  /* 間距可以稍微縮小一點 */
 }
 
 .product-card {
@@ -495,7 +599,7 @@ const handleSubmitReview = async () => {
 .product-status-tag.off-sale { background: #9499a0; }
 
 .product-body {
-  padding: 15px;
+  padding: 12px;
 }
 
 .product-name {
@@ -676,6 +780,45 @@ const handleSubmitReview = async () => {
 .submit-review-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 174, 236, 0.5);
+}
+
+.product-status-tag.draft { background: #00aeec; }      /* 草稿 - 藍色 */
+.product-status-tag.pending { background: #ffb11b; }    /* 審核中 - 橘色 */
+.product-status-tag.failed { background: #9499a0; }     /* 審核失敗 - 灰色 */
+/* 篩選按鈕區 */
+
+/* --- 切換鈕 --- */
+.tab-switcher {
+  display: flex;
+  justify-content: space-between; /* 讓兩組群組一左一右 */
+  align-items: center;
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+.tab-group {
+  display: flex;
+  background: #eee;             /* 灰色背景包住整組按鈕 */
+  padding: 4px;
+  border-radius: 25px;
+}
+
+.switch-btn {
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  background: transparent;      /* 預設透明背景 */
+  transition: all 0.3s;
+}
+
+.switch-btn.active {
+  background: white;            /* 選中時變白色 */
+  color: #fb7299;               /* 粉紅色文字 */
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 
