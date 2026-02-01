@@ -278,7 +278,36 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '退回賣場失敗' };
             }
+        },
+        // 更新賣場
+        async updateStore(storeId: number, formData: FormData) {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    return Promise.reject({ message: '請先登入' });
+                }
+
+                const response = await axios.put(
+                    `http://127.0.0.1:5275/api/createstore/${storeId}/update`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                            // 不用手動設定 Content-Type，axios 會自動處理 FormData
+                        }
+                    }
+                );
+
+                // 更新成功後重新抓取賣場列表
+                await this.fetchMyStores();
+
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '更新賣場失敗' };
+            }
         }
+
 
 
 
