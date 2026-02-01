@@ -96,6 +96,8 @@ import { ref, reactive, onMounted } from 'vue';
 import 'vue-cropper/dist/index.css';
 import { VueCropper } from 'vue-cropper';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+
 
 // --- Data ---
 const isEditing = ref(false);
@@ -130,17 +132,23 @@ onMounted(async () => {
       headers: { Authorization: `Bearer ${token}` }
     });
     console.log(res.data);
-    // 將後端資料填入畫面
     Object.assign(editData, res.data);
     avatarPreview.value = res.data.avatar || '';
     console.log(res.data.avatar);
 
-    // 建立備份
     backupData = JSON.parse(JSON.stringify(editData));
-  } catch (err) {
+  } catch (err: unknown) {  // ← 改成 unknown
     console.error('抓取資料失敗', err);
+
+    Swal.fire({
+      icon: 'error',
+      title: '哎呀! (｡•́︿•̀｡)',
+      text: '抓取資料失敗，請稍後再試',
+      confirmButtonColor: '#fb7299'
+    });
   }
 });
+
 
 // --- 圖片處理邏輯 ---
 const triggerUpload = () => {
@@ -188,52 +196,49 @@ const handleSave = async () => {
   try {
     const token = localStorage.getItem('token');
 
-    // 1. 搬出快遞箱 (建立 FormData 物件)
-    // 平常可以用json就好 但是因為有圖
-    // FormData可以裝得下Blob
     const formData = new FormData();
-
-    // 2. 往箱子裡塞文字資料
-    // 注意：這裡的 Key 名稱（第一個參數）必須跟妳後端 UpdateProfileDto 的屬性名稱「完全一樣」
     formData.append('Phone', editData.phone);
     formData.append('Address', editData.address);
 
-    // 3. 往箱子裡塞圖片檔案
-    // finalFile.value 是我們在 finishCrop 存下的 Blob 檔案
     if (finalFile.value) {
-      // 第三個參數可以自定義檔名，後端會用到
       formData.append('AvatarFile', finalFile.value, 'avatar.png');
     }
-    // 'AvatarFile' key 一定要跟後端DTO裡面寫的一樣
-    // finalFile.value 傳輸的數據
-    // 'avatar.png' 無所謂
 
-    // 4. 寄出掛號信 (發送 POST 請求)
     const res = await axios.post('/api/Auth/update', formData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 🌟 這裡不需要手動設定 'Content-Type'，Axios 看到 FormData 會自動幫妳設好
       }
     });
 
-    // 5. 成功後的收尾
-    alert('資料更新成功！');
+    // 成功提示
+    Swal.fire({
+      icon: 'success',
+      title: '資料更新成功！',
+      text: '(๑˃ᴗ˂)ﻭ',
+      confirmButtonColor: '#fb7299',
+      timer: 2000
+    });
 
-    // 如果後端有回傳新的頭像網址，更新它（避免畫面顯示舊的 blob 網址）
     if (res.data.avatarUrl) {
       editData.avatar = res.data.avatarUrl;
       avatarPreview.value = res.data.avatarUrl;
     }
 
-    // 更新備份檔並關閉編輯模式
     Object.assign(backupData, editData);
     isEditing.value = false;
 
-  } catch (err: any) {
+  } catch (err: unknown) {  // ← 改成 unknown
     console.error('儲存失敗：', err);
-    alert('儲存失敗，請稍後再試');
+
+    Swal.fire({
+      icon: 'error',
+      title: '儲存失敗 (´•ω•̥`)',
+      text: '請稍後再試唷',
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
+
 
 const handleCancel = () => {
   Object.assign(editData, backupData);

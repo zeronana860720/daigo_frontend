@@ -85,7 +85,7 @@
 <script setup lang="ts" name="ProductReview">
 import { computed, onMounted, ref } from 'vue';
 import { useStoreStore } from '@/stores/store';
-
+import Swal from 'sweetalert2';
 // 1. 初始化 Store
 const storeStore = useStoreStore();
 
@@ -104,26 +104,60 @@ onMounted(async () => {
 const loadPendingProducts = async () => {
   try {
     const response = await storeStore.fetchPendingProducts();
-    console.log('api回傳',response);
+    console.log('api回傳', response);
     pendingProducts.value = response;
-  } catch (error) {
+  } catch (error: unknown) {  // ← 改成 unknown
     console.error('載入待審核商品失敗:', error);
-    alert('載入失敗，請稍後再試唷 (｡•́︿•̀｡)');
+
+    Swal.fire({
+      icon: 'error',
+      title: '哎呀! (｡•́︿•̀｡)',
+      text: '載入失敗，請稍後再試唷',
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
 
 // 5. 審核通過
+// 5. 審核通過
 const handleApprove = async (productId: number) => {
-  if (confirm('確定要通過這個商品嗎？ (๑•̀ㅂ•́)و✧')) {
+  const result = await Swal.fire({
+    title: '確定要通過這個商品嗎？',
+    text: '',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#fb7299',
+    cancelButtonColor: '#9499a0',
+    confirmButtonText: '確定通過',
+    cancelButtonText: '取消'
+  });
+
+  if (result.isConfirmed) {
     try {
       await storeStore.approveProduct(productId);
-      alert('審核通過成功！(๑˃ᴗ˂)ﻭ');
-      await loadPendingProducts(); // 重新載入列表
-    } catch (error: any) {
-      alert(error.message || '操作失敗，請稍後再試');
+
+      Swal.fire({
+        icon: 'success',
+        title: '審核通過成功！',
+        text: '(๑˃ᴗ˂)ﻭ',
+        confirmButtonColor: '#fb7299',
+        timer: 2000
+      });
+
+      await loadPendingProducts();
+    } catch (error: unknown) {
+      const errorMessage = (error as { message?: string })?.message || '操作失敗，請稍後再試';
+
+      Swal.fire({
+        icon: 'error',
+        title: '哎呀出錯了 (´•ω•̥`)',
+        text: errorMessage,
+        confirmButtonColor: '#fb7299'
+      });
     }
   }
 };
+
 
 // 6. 退回商品
 const handleReject = (productId: number) => {
@@ -133,21 +167,43 @@ const handleReject = (productId: number) => {
 };
 
 // 7. 確認退回
+// 7. 確認退回
 const submitReject = async () => {
   if (!rejectReason.value.trim()) {
-    alert('請填寫退回原因唷！(´・ω・`)');
+    Swal.fire({
+      icon: 'warning',
+      title: '請填寫退回原因唷！',
+      text: '(´・ω・`)',
+      confirmButtonColor: '#fb7299'
+    });
     return;
   }
 
   try {
     await storeStore.rejectProduct(currentTargetProductId.value!, rejectReason.value);
-    alert('已成功退回商品！');
+
     showRejectModal.value = false;
-    await loadPendingProducts(); // 重新載入列表
-  } catch (error: any) {
-    alert(error.message || '連線好像有點問題，請稍後再試');
+
+    Swal.fire({
+      icon: 'success',
+      title: '已成功退回商品！',
+      confirmButtonColor: '#fb7299',
+      timer: 2000
+    });
+
+    await loadPendingProducts();
+  } catch (error: unknown) {
+    const errorMessage = (error as { message?: string })?.message || '連線好像有點問題，請稍後再試';
+
+    Swal.fire({
+      icon: 'error',
+      title: '操作失敗 (´•ω•̥`)',
+      text: errorMessage,
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
+
 
 // 8. 格式化日期
 const formatDate = (dateStr: string | undefined) => {

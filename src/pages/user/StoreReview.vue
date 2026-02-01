@@ -85,6 +85,7 @@
 <script setup lang="ts" name="StoreReview">
 import { onMounted, ref } from 'vue';
 import { useStoreStore } from '@/stores/store';
+import Swal from 'sweetalert2';
 
 // 1. 初始化 Store
 const storeStore = useStoreStore();
@@ -105,21 +106,55 @@ const loadPendingStores = async () => {
   try {
     const response = await storeStore.fetchPendingStores();
     pendingStores.value = response;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('載入待審核賣場失敗:', error);
-    alert('載入失敗，請稍後再試唷 (｡•́︿•̀｡)');
+
+    // 使用 SweetAlert2 顯示錯誤
+    Swal.fire({
+      icon: 'error',
+      title: '哎呀! (｡•́︿•̀｡)',
+      text: '載入失敗，請稍後再試唷',
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
 
 // 5. 審核通過
 const handleApprove = async (storeId: number) => {
-  if (confirm('確定要通過這間賣場嗎？ (๑•̀ㅂ•́)و✧')) {
+  const result = await Swal.fire({
+    title: '確定要通過這間賣場嗎？',
+    text: '',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#fb7299',
+    cancelButtonColor: '#9499a0',
+    confirmButtonText: '確定通過',
+    cancelButtonText: '取消'
+  });
+
+  if (result.isConfirmed) {
     try {
       await storeStore.approveStore(storeId);
-      alert('審核通過成功！(๑˃ᴗ˂)ﻭ');
-      await loadPendingStores(); // 重新載入列表
-    } catch (error: any) {
-      alert(error.message || '操作失敗，請稍後再試');
+
+      // 成功提示
+      Swal.fire({
+        icon: 'success',
+        title: '審核通過成功！',
+        text: '(๑˃ᴗ˂)ﻭ',
+        confirmButtonColor: '#fb7299',
+        timer: 2000
+      });
+
+      await loadPendingStores();
+    } catch (error: unknown) {
+      const errorMessage = (error as { message?: string })?.message || '操作失敗，請稍後再試';
+
+      Swal.fire({
+        icon: 'error',
+        title: '哎呀出錯了 (´•ω•̥`)',
+        text: errorMessage,
+        confirmButtonColor: '#fb7299'
+      });
     }
   }
 };
@@ -134,17 +169,37 @@ const handleReject = (storeId: number) => {
 // 7. 確認退回
 const submitReject = async () => {
   if (!rejectReason.value.trim()) {
-    alert('請填寫退回原因唷！(´・ω・`)');
+    Swal.fire({
+      icon: 'warning',
+      title: '請填寫退回原因唷！',
+      text: '(´・ω・`)',
+      confirmButtonColor: '#fb7299'
+    });
     return;
   }
 
   try {
     await storeStore.rejectStore(currentTargetStoreId.value!, rejectReason.value);
-    alert('已成功退回賣場申請！');
+
     showRejectModal.value = false;
-    await loadPendingStores(); // 重新載入列表
-  } catch (error: any) {
-    alert(error.message || '連線好像有點問題，請稍後再試');
+
+    Swal.fire({
+      icon: 'success',
+      title: '已成功退回賣場申請！',
+      confirmButtonColor: '#fb7299',
+      timer: 2000
+    });
+
+    await loadPendingStores();
+  } catch (error: unknown) {
+    const errorMessage = (error as { message?: string })?.message || '連線好像有點問題，請稍後再試';
+
+    Swal.fire({
+      icon: 'error',
+      title: '操作失敗',
+      text: errorMessage,
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
 
