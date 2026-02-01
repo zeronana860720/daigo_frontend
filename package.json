@@ -16,6 +16,7 @@
     "@microsoft/signalr": "^10.0.0",
     "axios": "^1.13.2",
     "pinia": "^3.0.4",
+    "sweetalert2": "^11.26.17",
     "vue": "^3.5.26",
     "vue-cropper": "^1.1.4",
     "vue-router": "^4.6.4"

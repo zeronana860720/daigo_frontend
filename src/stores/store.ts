@@ -233,7 +233,53 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '退回商品失敗' };
             }
+        },
+        // 審核通過賣場
+        async approveStore(storeId: number) {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    return Promise.reject({ message: '請先登入' });
+                }
+
+                const response = await axios.post(
+                    `http://127.0.0.1:5275/api/review/${storeId}/storeapprove`,
+                    {},  // ← 空物件就好,不需要傳 comment
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '審核通過失敗' };
+            }
+        },
+
+// 退回賣場
+        async rejectStore(storeId: number, reason: string) {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    return Promise.reject({ message: '請先登入' });
+                }
+
+                const response = await axios.post(
+                    `http://127.0.0.1:5275/api/review/${storeId}/rejectstore`,
+                    { comment: reason },  // ← 注意是小寫的 comment 唷!
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '退回賣場失敗' };
+            }
         }
+
 
 
 

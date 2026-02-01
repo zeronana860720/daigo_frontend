@@ -76,6 +76,7 @@
 import { computed, onMounted } from 'vue';
 import { useCommissionStore } from '@/stores/commission';
 import {ref} from "vue";
+import Swal from 'sweetalert2';
 
 // 1. 初始化 Store
 const store = useCommissionStore();
@@ -91,26 +92,48 @@ const pendingCommissions = computed(() => {
 });
 console.log(pendingCommissions);
 
-// 4. 實作「審核通過」
-// 1. ✨ 自動化審核通過邏輯
-const handleApprove = async (serviceCode: string) => {
-  // 還是要確認一下，避免手滑點錯喔 (｡◕∀◕｡)
-  if (confirm('確定要通過這筆委託嗎？')) {
-    try {
-      // 直接呼叫 Store 的 action
-      // 傳入 true (通過), 並自動填寫 reason 為 "通過"
-      const result = await store.reviewCommission(serviceCode, true, '通過');
 
-      if (result?.success) {
-        alert('審核通過成功！(๑˃ᴗ˂)ﻭ');
-        // 重新整理列表，讓該卡片消失
+// 4. 實作「審核通過」
+const handleApprove = async (serviceCode: string) => {
+  const result = await Swal.fire({
+    title: '確定要通過這筆委託嗎？',
+    text: '',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#fb7299',
+    cancelButtonColor: '#9499a0',
+    confirmButtonText: '確定通過 ',
+    cancelButtonText: '取消'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const apiResult = await store.reviewCommission(serviceCode, true, '通過');
+
+      if (apiResult?.success) {
+        Swal.fire({
+          icon: 'success',
+          title: '審核通過成功！',
+          text: '(๑˃ᴗ˂)ﻭ',
+          confirmButtonColor: '#fb7299',
+          timer: 2000
+        });
+
         await store.fetchUserManageCommissions();
       }
-    } catch (error: any) {
-      alert(error.message || '操作失敗，請稍後再試');
+    } catch (error: unknown) {
+      const errorMessage = (error as { message?: string })?.message || '操作失敗，請稍後再試';
+
+      Swal.fire({
+        icon: 'error',
+        title: '哎呀出錯了 (´•ω•̥`)',
+        text: errorMessage,
+        confirmButtonColor: '#fb7299'
+      });
     }
   }
 };
+
 
 // 5. 實作「審核失敗」
 // 1. ✨ 當管理員按下「審核失敗」按鈕時
@@ -121,27 +144,45 @@ const handleReject = (serviceCode: string) => {
 };
 
 // 2. ✨ 當管理員在彈窗按下「確認退回」時
+// 5. 確認退回
 const submitReject = async () => {
-  // 檢查一下有沒有填理由，沒填理由使用者會很困惑的 (´•ω•̥`)
   if (!rejectReason.value.trim()) {
-    alert('請填寫退回原因唷！');
+    Swal.fire({
+      icon: 'warning',
+      title: '請填寫退回原因唷！',
+      text: '(´・ω・`)',
+      confirmButtonColor: '#fb7299'
+    });
     return;
   }
 
   try {
-    // 呼叫我們在 Store 寫好的 API Action
-    // 傳入 false 代表審核失敗
     const result = await store.reviewCommission(currentTargetCode.value, false, rejectReason.value);
 
     if (result?.success) {
-      alert('已成功退回委託！');
-      showRejectModal.value = false;       // 關閉彈窗
-      await store.fetchUserManageCommissions(); // 刷新列表，讓處理完的項目消失
+      showRejectModal.value = false;
+
+      Swal.fire({
+        icon: 'success',
+        title: '已成功退回委託！',
+        confirmButtonColor: '#fb7299',
+        timer: 2000
+      });
+
+      await store.fetchUserManageCommissions();
     }
-  } catch (error: any) {
-    alert(error.message || '連線好像有點問題，請稍後再試');
+  } catch (error: unknown) {
+    const errorMessage = (error as { message?: string })?.message || '連線好像有點問題，請稍後再試';
+
+    Swal.fire({
+      icon: 'error',
+      title: '操作失敗 (´•ω•̥`)',
+      text: errorMessage,
+      confirmButtonColor: '#fb7299'
+    });
   }
 };
+
 // --- 審核退回彈窗相關 ---
 const showRejectModal = ref(false); // 控制彈窗顯示/隱藏
 const currentTargetCode = ref('');  // 紀錄目前正在審核哪一筆
