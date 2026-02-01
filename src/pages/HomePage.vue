@@ -1,421 +1,428 @@
 <template>
   <div class="home-page">
-    <!-- 🌟 Hero Banner - 熱門商品&促銷輪播 -->
-    <section class="hero-banner-section">
-      <div class="banner-container">
-        <!-- 主輪播區 -->
-        <div class="banner-slider">
-          <div class="banner-track" :style="{ transform: `translateX(-${currentBannerIndex * 100}%)` }">
-            <div
-                v-for="(banner, index) in banners"
-                :key="index"
-                class="banner-slide"
-            >
-              <div class="banner-content">
-                <div class="banner-text">
-                  <h1 class="banner-title">{{ banner.title }}</h1>
-                  <p class="banner-subtitle">{{ banner.subtitle }}</p>
-                  <button class="banner-btn">{{ banner.buttonText }}</button>
-                </div>
-                <div class="banner-image">
-                  <img :src="banner.image" :alt="banner.title">
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- 輪播控制點 -->
-          <div class="banner-dots">
-            <button
-                v-for="(_, index) in banners"
-                :key="index"
-                class="dot"
-                :class="{ active: index === currentBannerIndex }"
-                @click="currentBannerIndex = index"
-            />
-          </div>
-
-          <!-- 前後按鈕 -->
-          <button class="banner-arrow left" @click="prevBanner">‹</button>
-          <button class="banner-arrow right" @click="nextBanner">›</button>
-        </div>
+    <section class="hero-section">
+      <div class="hero-bg">
+        <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=2574&auto=format&fit=crop" alt="Japan Street" />
+        <div class="hero-overlay"></div>
       </div>
-    </section>
 
-    <!-- 📍 熱門地區區域 -->
-    <section class="regions-section">
-      <div class="section-wrapper">
-        <div class="section-header">
-          <h2 class="section-title">熱門地區</h2>
-          <span class="subtitle-text">選擇地區,探索當地熱門商品</span>
-        </div>
+      <div class="hero-content">
+        <h1 class="main-title">你的日本願望清單</h1>
+        <p class="sub-title">發布委託讓小幫手幫你帶回，或是接取任務賺取旅費</p>
 
-        <div class="regions-grid">
-          <button
-              v-for="region in popularRegions"
-              :key="region.id"
-              class="region-btn"
-              @click="searchByRegion(region.name)"
-          >
-            <span class="region-icon">📍</span>
-            <span class="region-name">{{ region.name }}</span>
-            <span class="region-count">{{ region.count }}</span>
+        <div class="hero-actions">
+          <button class="action-btn primary" @click="router.push('/create-commission')">
+            <span class="btn-text">發布委託代購</span>
+            <span class="btn-sub">我想要買東西</span>
+          </button>
+          <button class="action-btn secondary" @click="router.push('/commissions')">
+            <span class="btn-text">接取委託任務</span>
+            <span class="btn-sub">順路賺取酬勞</span>
           </button>
         </div>
       </div>
+
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-num">1,208</span>
+          <span class="stat-label">進行中委託</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">NT$ 580萬</span>
+          <span class="stat-label">累積成交金額</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">98%</span>
+          <span class="stat-label">任務完成率</span>
+        </div>
+      </div>
     </section>
 
-    <!-- 🛍️ 商品列表區域 -->
-    <section class="products-list-section">
-      <div class="section-wrapper">
-        <div class="section-header">
-          <h2 class="section-title">精選商品</h2>
-          <span class="subtitle-text">熱銷中的優質商品</span>
+    <section class="section-container">
+      <div class="section-header">
+        <div class="header-left">
+          <h2 class="section-title">急需小幫手</h2>
+          <p class="section-desc">這些委託即將截止，現在接取正是時候</p>
         </div>
+        <button class="view-more-btn" @click="router.push('/commissions')">查看全部委託</button>
+      </div>
 
-        <!-- 商品網格 -->
-        <div class="products-grid">
-          <div
-              v-for="item in productStore.products.slice(0, 12)"
-              :key="item.id"
-              class="product-card"
-              @click="goToDetail(item.id)"
-          >
-            <div class="card-img-box">
-              <img :src="item.image" :alt="item.name" class="product-img">
-              <span class="img-tag">JP</span>
-              <div class="hot-badge">熱銷中</div>
+      <div class="commissions-grid">
+        <div
+            v-for="item in hotCommissions"
+            :key="item.id"
+            class="simple-card"
+            @click="router.push(`/commission/${item.id}`)"
+        >
+          <div class="card-img-box">
+            <img :src="item.image" :alt="item.title" class="product-img">
+            <span class="img-tag">{{ item.location }}</span>
+            <span class="urgent-tag" v-if="item.isUrgent">急件</span>
+          </div>
+
+          <div class="card-info">
+            <h3 class="product-name">{{ item.title }}</h3>
+
+            <div class="detail-row">
+              <span class="label">代購預算</span>
+              <span class="value price">NT$ {{ formatNumber(item.price) }}</span>
             </div>
 
-            <div class="card-info">
-              <h3 class="product-name">{{ item.name }}</h3>
-              <div class="price-section">
-                <span class="product-price">NT$ {{ item.price }}</span>
-              </div>
-              <div class="rating-section">
-                <span class="stars">⭐⭐⭐⭐⭐</span>
-                <span class="rating-count">{{ Math.floor(Math.random() * 200) + 50 }}+ 已購</span>
-              </div>
+            <div class="detail-row">
+              <span class="label">截止日期</span>
+              <span class="value date">{{ item.deadline }}</span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">酬勞試算</span>
+              <span class="value reward">+ NT$ {{ formatNumber(item.reward) }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="accept-action-btn">立即接單</button>
             </div>
           </div>
         </div>
-
-        <!-- 查看全部按鈕 -->
-        <div class="view-all-container">
-          <router-link to="/products" class="view-all-btn">
-            查看全部商品 →
-          </router-link>
-        </div>
       </div>
     </section>
 
-    <!-- 📂 分類按鈕區域 -->
-    <section class="categories-section">
-      <div class="section-wrapper">
-        <div class="section-header">
-          <h2 class="section-title">商品分類</h2>
-          <span class="subtitle-text">快速找到你想要的商品</span>
-        </div>
-
-        <div class="categories-grid">
-          <button
-              v-for="category in productCategories"
-              :key="category.id"
-              class="category-btn"
-              @click="filterByCategory(category.name)"
-          >
-            <span class="category-icon">{{ category.icon }}</span>
-            <span class="category-name">{{ category.name }}</span>
-            <span class="category-count">{{ category.count }}</span>
-          </button>
-        </div>
+    <section class="section-container bg-light">
+      <div class="section-header center">
+        <h2 class="section-title">熱門代購地區</h2>
+        <p class="section-desc">你正要前往這些地方嗎？看看有什麼順路委託</p>
       </div>
-    </section>
 
-    <!-- 💡 特色區域 -->
-    <section class="features-section">
-      <div class="section-wrapper">
-        <div class="features-grid">
-          <div class="feature-card">
-            <span class="feature-icon">🚚</span>
-            <h3>快速配送</h3>
-            <p>7-14 天送達台灣</p>
+      <div class="region-grid">
+        <div class="region-card" @click="filterRegion('tokyo')">
+          <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800" alt="Tokyo">
+          <div class="region-overlay">
+            <span class="region-name">東京</span>
+            <span class="region-count">342 件委託</span>
           </div>
-          <div class="feature-card">
-            <span class="feature-icon">💯</span>
-            <h3>正品保證</h3>
-            <p>100% 日本原裝進口</p>
+        </div>
+        <div class="region-card" @click="filterRegion('osaka')">
+          <img src="https://static.gltjp.com/glt/data/article/21000/20172/20220706_021112_75cf4196_w1920.webp" alt="Osaka">
+          <div class="region-overlay">
+            <span class="region-name">大阪</span>
+            <span class="region-count">215 件委託</span>
           </div>
-          <div class="feature-card">
-            <span class="feature-icon">🛡️</span>
-            <h3>安全交易</h3>
-            <p>買家賣家雙重保護</p>
+        </div>
+        <div class="region-card" @click="filterRegion('kyoto')">
+          <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800" alt="Kyoto">
+          <div class="region-overlay">
+            <span class="region-name">京都</span>
+            <span class="region-count">189 件委託</span>
+          </div>
+        </div>
+        <div class="region-card" @click="filterRegion('hokkaido')">
+          <img src="https://www.niusnews.com/upload/posts/posts_image3_76059_1554973221.jpg" alt="Hokkaido">
+          <div class="region-overlay">
+            <span class="region-name">北海道</span>
+            <span class="region-count">105 件委託</span>
           </div>
         </div>
       </div>
     </section>
+
+    <section class="section-container">
+      <h2 class="section-title center-text">簡單四步驟</h2>
+
+      <div class="steps-wrapper">
+        <div class="step-item">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <h3>發布委託</h3>
+          <p>填寫商品詳情與願付價格</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3>達人接單</h3>
+          <p>旅日小幫手確認並接取任務</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <h3>採購寄回</h3>
+          <p>小幫手購買後帶回或寄送</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+            <span class="currency-symbol">$</span>
+          </div>
+          <h3>確認撥款</h3>
+          <p>收到商品無誤，系統撥款</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-container bg-light">
+      <div class="section-header">
+        <h2 class="section-title">精選現貨</h2>
+        <button class="view-more-btn secondary" @click="router.push('/products')">逛逛賣場</button>
+      </div>
+      <div class="commissions-grid">
+      </div>
+    </section>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useProductStore } from '@/stores/product'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const productStore = useProductStore()
-const router = useRouter()
+const router = useRouter();
 
-// Hero Banner 輪播
-const currentBannerIndex = ref(0)
-const banners = [
+// 模擬熱門委託資料
+const hotCommissions = ref([
   {
-    title: '🔥 新用戶首購優惠',
-    subtitle: '日本代購商品享 9 折優惠',
-    buttonText: '立即購買',
-    image: 'https://via.placeholder.com/400x250/ff6b6b/ffffff?text=New+User'
+    id: 1,
+    title: '大阪環球影城 瑪利歐賽車爆米花桶',
+    price: 1200,
+    reward: 300,
+    location: '大阪',
+    deadline: '2026-03-15',
+    image: 'https://citiesocial.s3.amazonaws.com/apps/campaign/campaign/17555/2249_large.jpg', // 請替換為真實圖片連結
+    isUrgent: true
   },
   {
-    title: '⭐ 本週精選',
-    subtitle: '東京熱銷商品推薦',
-    buttonText: '查看精選',
-    image: 'https://via.placeholder.com/400x250/fb7299/ffffff?text=Featured'
+    id: 2,
+    title: 'New York Perfect Cheese 12入',
+    price: 650,
+    reward: 150,
+    location: '東京',
+    deadline: '2026-03-20',
+    image: 'https://www.kixdutyfree.jp/on/demandware.static/-/Sites-catalog_master_sfcc_krs/default/dw4270ba44/images/large/2123600171_1_b.jpg',
+    isUrgent: false
   },
   {
-    title: '🎁 限時活動',
-    subtitle: '滿 1000 元送 100 元折扣券',
-    buttonText: '領取優惠',
-    image: 'https://via.placeholder.com/400x250/ff92ae/ffffff?text=Limited+Time'
+    id: 3,
+    title: '京都北山 茶之菓 10枚入',
+    price: 880,
+    reward: 200,
+    location: '京都',
+    deadline: '2026-04-01',
+    image: 'https://citiesocial.s3.ap-northeast-1.amazonaws.com/apps/products/product_description_images/20231127/1701051102/1300_%E5%B7%A5%E4%BD%9C%E5%8D%80%E5%9F%9F_1.jpg',
+    isUrgent: false
+  },
+  {
+    id: 4,
+    title: 'Shiro 皂香香水 40ml (限定版)',
+    price: 1500,
+    reward: 350,
+    location: '北海道',
+    deadline: '2026-03-10',
+    image: 'https://mall.iopenmall.tw/website/uploads_product/website_8424/P0842406452732_3_102312204.jpg',
+    isUrgent: true
   }
-]
+]);
 
-const nextBanner = () => {
-  currentBannerIndex.value = (currentBannerIndex.value + 1) % banners.length
-}
+const formatNumber = (num: number) => num.toLocaleString();
 
-const prevBanner = () => {
-  currentBannerIndex.value = (currentBannerIndex.value - 1 + banners.length) % banners.length
-}
-
-// 自動輪播
-setInterval(() => {
-  nextBanner()
-}, 5000)
-
-// 熱門地區
-const popularRegions = [
-  { id: 1, name: '東京', count: 234 },
-  { id: 2, name: '大阪', count: 189 },
-  { id: 3, name: '京都', count: 156 },
-  { id: 4, name: '澀谷', count: 203 },
-  { id: 5, name: '新宿', count: 198 },
-  { id: 6, name: '橫濱', count: 142 }
-]
-
-// 商品分類
-const productCategories = [
-  { id: 1, name: '周邊', icon: '🎮', count: 245 },
-  { id: 2, name: '伴手禮', icon: '🍰', count: 189 },
-  { id: 3, name: '美妝', icon: '💄', count: 312 },
-  { id: 4, name: '服飾', icon: '👕', count: 267 },
-  { id: 5, name: '電子產品', icon: '📱', count: 156 },
-  { id: 6, name: '食品', icon: '🍫', count: 198 }
-]
-
-// 按地區搜尋
-const searchByRegion = (regionName: string) => {
-  router.push({
-    path: '/products',
-    query: { region: regionName }
-  })
-}
-
-// 按分類篩選
-const filterByCategory = (categoryName: string) => {
-  router.push({
-    path: '/products',
-    query: { category: categoryName }
-  })
-}
-
-// 進入商品詳情
-const goToDetail = (id: number) => {
-  router.push(`/product/${id}`)
-}
+const filterRegion = (region: string) => {
+  router.push({ path: '/commissions', query: { location: region } });
+};
 </script>
 
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* 全域變數 */
+:root {
+  --primary-pink: #fb7299;
+  --secondary-blue: #00aeec;
+  --text-dark: #222;
+  --text-gray: #666;
+  --bg-light: #f4f5f7;
 }
 
 .home-page {
+  background-color: #fff;
   min-height: 100vh;
-  background-color: #f5f5f5;
 }
 
-/* 🌟 Hero Banner 區域 */
-.hero-banner-section {
-  width: 100%;
-  background: white;
-  padding: 20px 0;
-}
-
-.banner-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.banner-slider {
+/* --- Hero Section --- */
+.hero-section {
   position: relative;
-  width: 100%;
-  height: 300px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
-
-.banner-track {
-  display: flex;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 100%;
-}
-
-.banner-slide {
-  min-width: 100%;
-  display: flex;
-  height: 100%;
-}
-
-.banner-content {
+  height: 560px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 40px;
-  background: linear-gradient(135deg, #ff6b6b 0%, #fb7299 100%);
+  justify-content: center;
   color: white;
+  text-align: center;
+  //overflow: hidden;
 }
 
-.banner-text {
-  flex: 1;
-  max-width: 500px;
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
-.banner-title {
-  font-size: 36px;
+.hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(34, 34, 34, 0.6) 0%, rgba(251, 114, 153, 0.3) 100%);
+  backdrop-filter: blur(2px);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  padding: 0 20px;
+  margin-bottom: 40px; /* 留給 Stats Bar 空間 */
+}
+
+.main-title {
+  font-size: 48px;
   font-weight: 800;
-  margin-bottom: 12px;
-  letter-spacing: 1px;
+  margin-bottom: 16px;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  letter-spacing: 2px;
 }
 
-.banner-subtitle {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 20px;
-  line-height: 1.5;
+.sub-title {
+  font-size: 20px;
+  margin-bottom: 40px;
+  opacity: 0.95;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.banner-btn {
+.hero-actions {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 16px 40px;
+  border-radius: 50px; /* 圓潤按鈕 */
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+  border: none;
+}
+
+.action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.action-btn.primary {
+  background: #fb7299;
+  color: white;
+  box-shadow: 0 4px 15px rgba(251, 114, 153, 0.4);
+}
+
+.action-btn.secondary {
   background: white;
   color: #fb7299;
-  padding: 12px 32px;
-  border: none;
-  border-radius: 25px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.banner-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+.btn-text {
+  font-size: 18px;
+  font-weight: bold;
 }
 
-.banner-image {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.btn-sub {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
-.banner-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-/* 輪播控制 */
-.banner-dots {
+/* Stats Bar */
+.stats-bar {
   position: absolute;
-  bottom: 15px;
+  bottom: -30px; /* 讓它有一半浮在 Hero 外面 */
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 10;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid white;
-  background: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.dot.active {
   background: white;
-  width: 24px;
-  border-radius: 5px;
-}
-
-.banner-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border-radius: 50%;
+  padding: 20px 60px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 10;
+  gap: 40px;
+  z-index: 3;
+  width: 80%;
+  max-width: 900px;
+  justify-content: space-around;
 }
 
-.banner-arrow:hover {
-  background: rgba(255, 255, 255, 0.5);
+.stat-item {
+  text-align: center;
 }
 
-.banner-arrow.left {
-  left: 15px;
+.stat-num {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fb7299;
+  line-height: 1.2;
 }
 
-.banner-arrow.right {
-  right: 15px;
+.stat-label {
+  font-size: 14px;
+  color: #9499a1;
 }
 
-/* 📍 熱門地區區域 */
-.regions-section {
-  padding: 40px 20px;
-  background-color: white;
-  border-bottom: 8px solid #f5f5f5;
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: #eee;
 }
 
-.section-wrapper {
+/* --- 通用區塊設定 --- */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+
+.section-container.bg-light {
+  background-color: #f9f9f9;
+  max-width: 100%; /* 全寬背景 */
+}
+.section-container.bg-light .section-header,
+.section-container.bg-light .region-grid {
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -424,406 +431,317 @@ const goToDetail = (id: number) => {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 25px;
-  flex-wrap: wrap;
-  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.section-header.center {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .section-title {
-  color: #333;
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 800;
-  border-left: 5px solid #fb7299;
-  padding-left: 15px;
+  color: #222;
+  margin-bottom: 8px;
 }
 
-.subtitle-text {
-  color: #999;
-  font-size: 13px;
+.section-desc {
+  color: #666;
+  font-size: 16px;
 }
 
-.regions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.region-btn {
+.view-more-btn {
+  padding: 10px 24px;
+  border: 1px solid #fb7299;
+  color: #fb7299;
   background: white;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px 12px;
+  border-radius: 30px;
   cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.view-more-btn:hover {
+  background: #fb7299;
+  color: white;
+}
+
+/* --- 卡片樣式 (優化自 simple-card) --- */
+.commissions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.simple-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
   transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.simple-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+  border-color: #fb7299;
+}
+
+.card-img-box {
+  position: relative;
+  height: 180px; /* 稍微加高 */
+  background: #f8f8f8;
+  overflow: hidden;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.simple-card:hover .product-img {
+  transform: scale(1.05);
+}
+
+.img-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.urgent-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #fb7299;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(251, 114, 153, 0.4);
+}
+
+.card-info {
+  padding: 16px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-name {
+  font-size: 16px;
+  color: #222;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  height: 44px; /* 兩行高度 */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.label {
+  color: #9499a1;
+}
+
+.value.price {
+  color: #222;
+  font-weight: 600;
+}
+
+.value.date {
+  color: #666;
+}
+
+.value.reward {
+  color: #ff9800; /* 強調賺錢的橘金色 */
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.card-actions {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px dashed #eee;
+}
+
+.accept-action-btn {
+  width: 100%;
+  padding: 10px;
+  background: #fb7299;
+  color: white;
+  border: none;
+  border-radius: 6px; /* 方圓角 */
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.accept-action-btn:hover {
+  background: #e85a85;
+}
+
+/* --- 地區方塊 --- */
+.region-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.region-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 240px;
+  cursor: pointer;
+}
+
+.region-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.region-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.region-card:hover img {
+  transform: scale(1.1);
+}
+
+.region-name {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.region-count {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 4px;
+  color: #fb7299; /* 點綴色 */
+}
+
+/* --- 步驟教學 (純 CSS Icon) --- */
+.steps-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 40px;
+}
+
+.step-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 13px;
+  text-align: center;
+  padding: 0 10px;
 }
 
-  .region-btn:hover {
-    border-color: #fb7299;
-    background-color: #fff5f7;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(251, 114, 153, 0.12);
-  }
+.step-icon {
+  width: 80px;
+  height: 80px;
+  background: #fff0f3;
+  color: #fb7299;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  transition: 0.3s;
+}
 
-  .region-icon {
-    font-size: 24px;
-  }
+.step-item:hover .step-icon {
+  background: #fb7299;
+  color: white;
+  transform: rotateY(180deg);
+}
 
-  .region-name {
-    color: #333;
-    font-weight: 700;
-    font-size: 14px;
-  }
+.step-line {
+  flex: 0 0 100px;
+  height: 2px;
+  background: #eee;
+  margin-top: 40px; /* 對齊圓圈中心 */
+}
 
-  .region-count {
-    color: #fb7299;
-    font-size: 11px;
-    font-weight: bold;
-  }
+.step-item h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333;
+}
 
-  /* 🛍️ 商品列表區域 */
-  .products-list-section {
-    padding: 50px 20px;
-    background-color: #f5f5f5;
-  }
+.step-item p {
+  color: #888;
+  font-size: 14px;
+  line-height: 1.6;
+}
 
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 40px;
+/* RWD 響應式 */
+@media (max-width: 1024px) {
+  .commissions-grid, .region-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
+}
 
-  /* 商品卡片 */
-  .product-card {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border: 1px solid #e8e8e8;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+@media (max-width: 768px) {
+  .hero-section {
+    height: auto;
+    padding: 100px 0 80px;
   }
-
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-    border-color: #fb7299;
-  }
-
-  .card-img-box {
+  .stats-bar {
     position: relative;
-    height: 160px;
-    background-color: #f8f8f8;
-    overflow: hidden;
-  }
-
-  .product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-  }
-
-  .product-card:hover .product-img {
-    transform: scale(1.05);
-  }
-
-  .img-tag {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 2px 5px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: bold;
-  }
-
-  .hot-badge {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    background: linear-gradient(90deg, #ff6b6b 0%, #fb7299 100%);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 0 2px 4px rgba(251, 114, 153, 0.4);
-  }
-
-  .card-info {
-    padding: 12px;
-  }
-
-  .product-name {
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 8px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 36px;
-    line-height: 1.4;
-  }
-
-  .price-section {
-    margin-bottom: 8px;
-  }
-
-  .product-price {
-    color: #ff6b6b;
-    font-size: 16px;
-    font-weight: 800;
-  }
-
-  .rating-section {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-  }
-
-  .stars {
-    color: #ffc41d;
-    letter-spacing: 1px;
-  }
-
-  .rating-count {
-    color: #999;
-  }
-
-  /* 查看全部按鈕 */
-  .view-all-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-  }
-
-  .view-all-btn {
-    background: linear-gradient(135deg, #ff6b6b 0%, #fb7299 100%);
-    color: white;
-    padding: 14px 40px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 700;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(251, 114, 153, 0.3);
-    display: inline-block;
-  }
-
-  .view-all-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(251, 114, 153, 0.4);
-  }
-
-  /* 📂 分類按鈕區域 */
-  .categories-section {
-    padding: 50px 20px;
-    background-color: white;
-  }
-
-  .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-  }
-
-  .category-btn {
-    background: linear-gradient(135deg, rgba(251, 114, 153, 0.05) 0%, rgba(255, 146, 174, 0.05) 100%);
-    border: 2px solid #f0f0f0;
-    border-radius: 12px;
-    padding: 24px 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
+    bottom: 0;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 14px;
+    width: 90%;
+    gap: 20px;
+    margin-top: 40px;
   }
-
-  .category-btn:hover {
-    border-color: #fb7299;
-    background: linear-gradient(135deg, rgba(251, 114, 153, 0.15) 0%, rgba(255, 146, 174, 0.15) 100%);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(251, 114, 153, 0.2);
+  .stat-divider {
+    width: 100%;
+    height: 1px;
   }
-
-  .category-icon {
-    font-size: 32px;
-  }
-
-  .category-name {
-    color: #333;
-    font-weight: 700;
-    font-size: 16px;
-  }
-
-  .category-count {
-    color: #fb7299;
-    font-size: 12px;
-    font-weight: bold;
-  }
-
-  /* 💡 特色區域 */
-  .features-section {
-    padding: 50px 20px;
-    background-color: #fafafa;
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  .steps-wrapper {
+    flex-direction: column;
     gap: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
   }
-
-  .feature-card {
-    text-align: center;
-    padding: 25px 20px;
-    border-radius: 8px;
-    background: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  .step-line {
+    display: none;
   }
-
-  .feature-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(251, 114, 153, 0.1);
+  .commissions-grid, .region-grid {
+    grid-template-columns: 1fr;
   }
-
-  .feature-icon {
-    font-size: 40px;
-    display: block;
-    margin-bottom: 12px;
-  }
-
-  .feature-card h3 {
-    color: #333;
-    font-size: 16px;
-    margin-bottom: 6px;
-    font-weight: 700;
-  }
-
-  .feature-card p {
-    color: #999;
-    font-size: 13px;
-  }
-
-  /* 響應式設計 */
-  @media (max-width: 1024px) {
-    .banner-content {
-      flex-direction: column;
-      text-align: center;
-      padding: 30px 20px;
-    }
-
-    .banner-title {
-      font-size: 28px;
-    }
-
-    .banner-text {
-      max-width: 100%;
-    }
-
-    .products-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .banner-slider {
-      height: 250px;
-    }
-
-    .banner-content {
-      padding: 20px;
-    }
-
-    .banner-title {
-      font-size: 22px;
-    }
-
-    .banner-subtitle {
-      font-size: 14px;
-    }
-
-    .banner-btn {
-      padding: 10px 24px;
-      font-size: 14px;
-    }
-
-    .banner-image {
-      display: none;
-    }
-
-    .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .regions-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .categories-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .features-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .section-title {
-      font-size: 20px;
-    }
-
-    .card-img-box {
-      height: 140px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .banner-slider {
-      height: 200px;
-    }
-
-    .banner-title {
-      font-size: 18px;
-    }
-
-    .banner-subtitle {
-      font-size: 12px;
-    }
-
-    .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-
-    .regions-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .categories-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .section-title {
-      font-size: 18px;
-    }
-  }
+}
 </style>

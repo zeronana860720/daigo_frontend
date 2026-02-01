@@ -247,9 +247,12 @@ const getStatusLabel = (status: number) => {
     case 1: return '審核中';
     case 2: return '發布失敗';
     case 3: return '已發布';
+    case 4: return '停權';          // ← 加這行
+    case 5: return '已關閉';        // ← 加這行
     default: return '未知';
   }
 };
+
 
 // 用於標籤背景色
 const getStatusClass = (status: number) => {
@@ -258,9 +261,12 @@ const getStatusClass = (status: number) => {
     case 1: return 'pending';
     case 2: return 'failed';
     case 0: return 'draft';
+    case 4: return 'banned';        // ← 加這行
+    case 5: return 'closed';        // ← 加這行
     default: return 'pending';
   }
 };
+
 
 // 用於文字顏色 (新增)
 const getStatusTextColor = (status: number) => {
@@ -269,9 +275,12 @@ const getStatusTextColor = (status: number) => {
     case 1: return 'text-pending';
     case 2: return 'text-failed';
     case 0: return 'text-draft';
+    case 4: return 'text-banned';    // ← 加這行
+    case 5: return 'text-closed';    // ← 加這行
     default: return '';
   }
 };
+
 
 const getStoreImageUrl = (path: string | undefined) => {
   if (!path) return defaultImage;
@@ -789,4 +798,10 @@ const handleEditStore = (storeId: number) => {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.banned { background-color: #333; }      /* 停權 - 黑色 */
+.closed { background-color: #999; }      /* 已關閉 - 灰色 */
+
+.text-banned { color: #333; font-weight: bold; }
+.text-closed { color: #999; font-weight: bold; }
+
 </style>

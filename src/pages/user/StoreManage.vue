@@ -556,7 +556,7 @@ const handleDeleteStore = async () => {
         timer: 2000
       });
 
-      router.push('/shop');
+      router.push({name:'Shops'});
 
     } catch (error: unknown) {
       const errorMessage = (error as { message?: string })?.message || '關閉失敗';
@@ -575,12 +575,12 @@ const handleDeleteStore = async () => {
 const handleReopenStore = async () => {
   const result = await Swal.fire({
     title: '確定要重新啟用賣場嗎？',
-    text: '啟用後賣場和商品會恢復上架唷！(๑˃ᴗ˂)ﻭ',
+    text: '',
     icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#fb7299',
     cancelButtonColor: '#9499a0',
-    confirmButtonText: '確定啟用 ✨',
+    confirmButtonText: '確定啟用',
     cancelButtonText: '取消'
   });
 
