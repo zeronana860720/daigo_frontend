@@ -125,6 +125,8 @@ export const useCommissionStore = defineStore('commission', {
                 fd.append('Deadline', formData.endDate);
                 fd.append('Location', formData.location);
                 fd.append('Currency', formData.currency);
+                fd.append('Fee', formData.fee.toString());
+
 
                 // 地圖欄位 (對應後端的小寫加底線命名)
                 if (formData.google_place_id) fd.append('google_place_id', formData.google_place_id);

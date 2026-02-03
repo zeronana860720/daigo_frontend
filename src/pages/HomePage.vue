@@ -45,7 +45,7 @@
       <div class="section-header">
         <div class="header-left">
           <h2 class="section-title">急需小幫手</h2>
-          <p class="section-desc">這些委託即將截止，現在接取正是時候</p>
+          <p class="section-desc">有人可能需要您的協助</p>
         </div>
         <button class="view-more-btn" @click="router.push('/commissions')">查看全部委託</button>
       </div>

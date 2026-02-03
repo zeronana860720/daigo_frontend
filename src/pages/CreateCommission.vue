@@ -32,14 +32,9 @@
                 <option value="JPY">JPY</option>
                 <option value="TWD">TWD</option>
                 <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="KRW">KRW</option>
               </select>
               <input type="number" v-model="form.price" class="price" placeholder="請輸入預計價格" required>
             </div>
-          </div>
-          <div v-if="form.price && form.currency !== 'TWD'" class="converted-price">
-            ≈ NT$ {{ convertedPrice }}
           </div>
 
           <div class="form-group">
@@ -48,6 +43,41 @@
               <button type="button" class="quantity-btn minus-btn" @click="decreaseQty">−</button>
               <input type="number" v-model.number="form.quantity" class="quantity-input" min="1" readonly>
               <button type="button" class="quantity-btn plus-btn" @click="addQty">+</button>
+            </div>
+          </div>
+
+          <!-- ✨ 顯示商品總價台幣 -->
+          <div v-if="form.price && form.quantity" class="price-summary">
+            <div class="summary-row">
+              <span class="summary-label">商品總價:</span>
+              <span class="summary-value">NT$ {{ productTotalTwd }}</span>
+            </div>
+          </div>
+
+          <!-- ✨ 新增:報酬輸入欄位 -->
+          <div class="form-group">
+            <label>給小幫手的報酬 (台幣)</label>
+            <div class="fee-input-wrapper">
+              <input
+                  type="number"
+                  v-model.number="form.fee"
+                  class="fee-input"
+                  placeholder="請輸入報酬金額"
+                  min="0"
+                  required
+              >
+              <span class="currency-suffix">NT$</span>
+            </div>
+            <small class="hint" :class="{ 'error': isFeeError }">
+              {{ feeHintText }}
+            </small>
+          </div>
+
+          <!-- ✨ 顯示總扣款金額 -->
+          <div v-if="form.fee && form.price && form.quantity" class="total-summary">
+            <div class="total-row">
+              <span class="total-label">總扣款金額:</span>
+              <span class="total-value">NT$ {{ totalDeductTwd }}</span>
             </div>
           </div>
 
@@ -89,7 +119,7 @@
             <small class="hint">期間內若無人接取委託,系統將自動刪除此需求。</small>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="isSubmitting">
+          <button type="submit" class="submit-btn" :disabled="isSubmitting || isFeeError">
             {{ isSubmitting ? '正在發佈中...' : '確認送出委託' }}
           </button>
         </form>
@@ -131,15 +161,15 @@ const form = vueRef({
   quantity: 1,
   description: '',
   category: '',
-  currency: 'JPY'
+  currency: 'JPY',
+  fee: null as number | null  // ✨ 新增:報酬欄位
 });
 
+// ✨ 匯率 (要跟後端一樣)
 const exchangeRate = vueRef({
   JPY: 0.201,
   TWD: 1,
   USD: 32.5,
-  EUR: 35.2,
-  KRW: 0.024,
 });
 
 const avatar = vueRef('');
@@ -148,10 +178,42 @@ const cachedData = vueRef({
 });
 
 // --- 計算屬性 ---
-const convertedPrice = computed(() => {
-  if (!form.value.price || !form.value.currency) return '0.00';
+// ✨ 商品總價台幣
+const productTotalTwd = computed(() => {
+  if (!form.value.price || !form.value.quantity || !form.value.currency) return '0';
   const rate = exchangeRate.value[form.value.currency as keyof typeof exchangeRate.value];
-  return (form.value.price * rate).toFixed(2);
+  const total = form.value.price * form.value.quantity * rate;
+  return total.toFixed(0);
+});
+
+// ✨ 最低報酬 (商品總價的 20%)
+const minFeeTwd = computed(() => {
+  const total = Number(productTotalTwd.value);
+  return Math.round(total * 0.2);
+});
+
+// ✨ 檢查報酬是否低於最低標準
+const isFeeError = computed(() => {
+  if (!form.value.fee || !form.value.price) return false;
+  return form.value.fee < minFeeTwd.value;
+});
+
+// ✨ 報酬提示文字
+const feeHintText = computed(() => {
+  if (!form.value.price || !form.value.quantity) {
+    return '請先輸入商品價格與數量';
+  }
+  if (isFeeError.value) {
+    return `❌ 報酬至少需要 NT$ ${minFeeTwd.value} (商品總價的 20%)`;
+  }
+  return `✓ 最低報酬: NT$ ${minFeeTwd.value} (商品總價的 20%)`;
+});
+
+// ✨ 總扣款金額
+const totalDeductTwd = computed(() => {
+  if (!form.value.fee || !form.value.price || !form.value.quantity) return '0';
+  const total = Number(productTotalTwd.value) + form.value.fee;
+  return total.toFixed(0);
 });
 
 // --- 圖片與地圖相關 Refs ---
@@ -254,7 +316,14 @@ onMounted(async () => {
 
 // --- 送出表單 ---
 const handleSubmit = async () => {
-  if (isSubmitting.value) return;
+  if (isSubmitting.value || isFeeError.value) return;
+
+  // ✨ 檢查報酬是否有填寫
+  if (!form.value.fee) {
+    alert('請輸入給小幫手的報酬金額!');
+    return;
+  }
+
   isSubmitting.value = true;
 
   try {
@@ -292,7 +361,7 @@ const handleSubmit = async () => {
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 防止多餘滾動條 */
+  overflow: hidden;
 }
 
 .commission-page-layout {
@@ -329,14 +398,6 @@ body {
   margin-bottom: 8px;
   text-align: center;
   letter-spacing: 1.5px;
-}
-
-.form-subtitle {
-  color: #7f8c8d;
-  text-align: center;
-  margin-bottom: 28px;
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .form-group {
@@ -379,6 +440,11 @@ body {
   line-height: 1.4;
 }
 
+.hint.error {
+  color: #ff4757;
+  font-weight: 600;
+}
+
 .upload-container {
   width: 70px;
   height: 70px;
@@ -404,11 +470,6 @@ body {
   place-items: center;
   color: #a0aec0;
   margin-bottom: 6px;
-}
-
-.upload-placeholder span:last-child {
-  font-size: 13px;
-  color: #718096;
 }
 
 .image-preview-wrapper {
@@ -463,12 +524,16 @@ body {
   letter-spacing: 2px;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   transform: translateY(-3px);
   box-shadow: 0 12px 30px rgba(251, 114, 153, 0.45);
 }
 
-/* 🌟 地圖區域 - 加上可愛粉紅框 */
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .map-section {
   flex: 1;
   position: relative;
@@ -484,7 +549,6 @@ body {
   border-radius: 0;
 }
 
-/* 🎀 超可愛版地點資訊卡片 */
 .map-overlay-info {
   position: absolute;
   top: 25px;
@@ -503,7 +567,6 @@ body {
   animation: slideIn 0.5s ease-out;
 }
 
-/* 🎈 進場動畫 */
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -534,20 +597,19 @@ body {
 .pin-icon {
   width: 50px;
   height: 50px;
-  border: 1px solid #fb7299;  /* 人頭外框*/
+  border: 1px solid #fb7299;
   border-radius: 50%;
   object-fit: cover;
   font-size: 24px;
   animation: bounce 1.5s infinite cubic-bezier(0,.96,.54,.98);
   transition: all 0.3s ease;
 }
-.pin-icon:hover {
 
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);  /* 發光效果 */
-  transform: scale(1.4);  /* 放大 10% */
+.pin-icon:hover {
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  transform: scale(1.4);
 }
 
-/* avatar圖示跳動動畫 */
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);
@@ -580,7 +642,6 @@ body {
   font-style: italic;
 }
 
-/* 🌟 滾動條美化 */
 .form-section::-webkit-scrollbar {
   width: 8px;
 }
@@ -598,7 +659,7 @@ body {
 .form-section::-webkit-scrollbar-thumb:hover {
   background: #fb7299;
 }
-/* 🎀 改良版數量控制器樣式 */
+
 .quantity-control {
   display: flex;
   align-items: center;
@@ -617,9 +678,9 @@ body {
 }
 
 .quantity-btn {
-  width: 40px;  /* ✨ 從 45px 改成 40px */
-  height: 40px;  /* ✨ 從 45px 改成 40px */
-  border: none;  /* ✨ 移除所有邊框 */
+  width: 40px;
+  height: 40px;
+  border: none;
   background: linear-gradient(135deg, #fb7299 0%, #ff92ae 100%);
   color: white;
   font-size: 20px;
@@ -640,21 +701,12 @@ body {
   transform: scale(0.95);
 }
 
-/* ✨ 完全移除中間分隔線 */
-.minus-btn {
-  /* 不需要 border-right 了 */
-}
-
-.plus-btn {
-  /* 不需要 border-left 了 */
-}
-
 .quantity-input {
   width: 100px !important;
-  height: 40px;  /* ✨ 從 45px 改成 40px */
+  height: 40px;
   text-align: center;
-  border: none !important;  /* ✨ 移除邊框 */
-  outline: none !important;  /* ✨ 移除 focus 時的藍框 */
+  border: none !important;
+  outline: none !important;
   font-size: 17px;
   font-weight: 700;
   color: #2c3e50;
@@ -663,12 +715,12 @@ body {
   cursor: default;
 }
 
-/* 移除數字輸入框的上下箭頭 */
 .price::-webkit-inner-spin-button,
 .price::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 .quantity-input::-webkit-inner-spin-button,
 .quantity-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -679,12 +731,11 @@ body {
   -moz-appearance: textfield;
 }
 
-/* ✨ 移除 focus 時的任何外框 */
 .quantity-input:focus {
   outline: none;
   border: none;
 }
-/* 🎀 自訂下拉選單樣式 */
+
 .custom-select {
   width: 100%;
   padding: 12px 16px;
@@ -695,11 +746,9 @@ body {
   background-color: #fff;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  /* 移除預設箭頭 */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  /* 自訂箭頭 */
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fb7299' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -718,12 +767,6 @@ body {
   outline: none;
 }
 
-.custom-select option {
-  padding: 10px;
-  font-size: 14px;
-}
-
-/* 🎀 多行文字輸入框樣式 */
 .custom-textarea {
   width: 100%;
   padding: 12px 16px;
@@ -733,7 +776,7 @@ body {
   color: #2c3e50;
   background-color: #fff;
   font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-  resize: vertical;  /* 只能垂直調整大小 */
+  resize: vertical;
   min-height: 100px;
   max-height: 300px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -751,12 +794,6 @@ body {
   outline: none;
 }
 
-.custom-textarea::placeholder {
-  color: #a0aec0;
-  font-style: italic;
-}
-
-/* 🎀 字數統計樣式 */
 .char-count {
   display: block;
   margin-top: 6px;
@@ -765,14 +802,13 @@ body {
   text-align: right;
   font-style: italic;
 }
-/* 🎀 價格輸入組合樣式 */
+
 .price-input-group {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-/* 🎀 幣別下拉選單 */
 .currency-select {
   width: 120px;
   padding: 12px 16px;
@@ -805,7 +841,6 @@ body {
   outline: none;
 }
 
-/* 🎀 價格輸入框 */
 .price-input {
   flex: 1;
   padding: 12px 16px;
@@ -828,35 +863,127 @@ body {
   outline: none;
 }
 
-
 .price-input {
   -moz-appearance: textfield;
 }
 
-/* 🎀 換算後台幣價格樣式 */
-.converted-price {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #fff5f7 0%, #ffe8f0 100%);
-  border-left: 3px solid #fb7299;
+/* ✨ 新增:商品總價顯示 */
+.price-summary {
+  margin-top: -10px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-left: 3px solid #0ea5e9;
   border-radius: 8px;
-  color: #fb7299;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
   font-size: 14px;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.summary-value {
+  font-size: 18px;
+  color: #0284c7;
+  font-weight: 800;
+}
+
+/* ✨ 新增:報酬輸入框樣式 */
+.fee-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-prefix {
+  position: absolute;
+  left: 16px;
+  font-size: 15px;
   font-weight: 700;
-  text-align: right;
-  animation: fadeIn 0.3s ease-in;
+  color: #fb7299;
+  pointer-events: none;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.fee-input {
+  width: 100%;
+  padding: 12px 60px 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #2c3e50;
+  background-color: #fff;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  font-weight: 600;
 }
 
+.fee-input:hover {
+  border-color: #fb7299;
+  box-shadow: 0 0 0 4px rgba(251, 114, 153, 0.15);
+}
 
+.fee-input:focus {
+  border-color: #fb7299;
+  box-shadow: 0 0 0 4px rgba(251, 114, 153, 0.15);
+  outline: none;
+}
+
+.fee-input::-webkit-inner-spin-button,
+.fee-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fee-input {
+  -moz-appearance: textfield;
+}
+
+/* ✨ 新增:總扣款金額顯示 */
+.total-summary {
+  margin-top: -10px;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #fff5f7 0%, #ffe8f0 100%);
+  border: 2px solid #fb7299;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(251, 114, 153, 0.2);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-size: 16px;
+  color: #fb7299;
+  font-weight: 700;
+}
+
+.total-value {
+  font-size: 24px;
+  color: #fb7299;
+  font-weight: 900;
+}
+.currency-suffix {
+  position: absolute;
+  right: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fb7299;
+  pointer-events: none;
+}
+
+/* ✨ placeholder 樣式 */
+.fee-input::placeholder {
+  color: #a0aec0;
+  font-style: italic;
+}
 </style>
