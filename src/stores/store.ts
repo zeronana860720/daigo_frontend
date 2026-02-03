@@ -388,6 +388,7 @@ export const useStoreStore = defineStore('store', {
                 const response = await axios.get(
                     `http://127.0.0.1:5275/api/createstore/products/${productId}`
                 );
+                console.log('測試',response.data);
                 return response.data;
             } catch (error: any) {
                 console.error('取得商品詳情失敗:', error);
@@ -395,7 +396,40 @@ export const useStoreStore = defineStore('store', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        // 建立訂單 (需要登入)
+        async createOrder(orderData: {
+            storeId: number;
+            totalAmount: number;
+            receiverName: string;
+            receiverPhone: string;
+            shippingAddress: string;
+        }) {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    return Promise.reject({ message: '請先登入' });
+                }
+
+                const response = await axios.post(
+                    'http://127.0.0.1:5275/api/createstore/orders',
+                    orderData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                return response.data;
+            } catch (error: any) {
+                throw error.response?.data || { message: '訂單建立失敗' };
+            }
         }
+
 
     }
 });

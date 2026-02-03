@@ -65,8 +65,8 @@
              class="commission-card"
              @click="goToDetail(item.serviceCode)">
           <div class="card-image">
-            <img :src="item.imageUrl ? `http://localhost:5275${item.imageUrl}` : 'https://i.imgur.com/6VBx3io.png'"
-                 alt="商品圖">
+              <img :src="item.imageUrl ? `http://localhost:5275${item.imageUrl}` : 'https://i.imgur.com/6VBx3io.png'"
+                   alt="商品圖">
             <div class="status-tag">{{item.status}}</div>
             <div class="fee-rate-tag">{{ calculateFeeRate(item) }}%</div>
           </div>
