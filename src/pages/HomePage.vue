@@ -9,7 +9,7 @@
 
       <div class="hero-content">
         <h1 class="main-title">你的日本願望清單</h1>
-        <p class="sub-title">發布委託讓小幫手幫你帶回，或是接取任務賺取旅費</p>
+        <p class="sub-title">發布委託讓小幫手幫你帶回,或是接取任務賺取旅費</p>
 
         <div class="hero-actions">
           <button class="action-btn primary" @click="router.push('/create-commission')">
@@ -44,7 +44,7 @@
     <section class="section-container">
       <div class="section-header">
         <div class="header-left">
-          <h2 class="section-title">急需小幫手</h2>
+          <h2 class="section-title">急需小幫手-精選委託</h2>
           <p class="section-desc">有人可能需要您的協助</p>
         </div>
         <button class="view-more-btn" @click="router.push('/commissions')">查看全部委託</button>
@@ -52,33 +52,33 @@
 
       <div class="commissions-grid">
         <div
-            v-for="item in hotCommissions"
-            :key="item.id"
+            v-for="item in commissionStore.hotCommissions"
+            :key="item.serviceCode"
             class="simple-card"
-            @click="router.push(`/commission/${item.id}`)"
+            @click="router.push(`/commissions/${item.serviceCode}`)"
         >
           <div class="card-img-box">
-            <img :src="item.image" :alt="item.title" class="product-img">
+            <img :src="getImageUrl(item.imageUrl)" :alt="item.title" class="product-img">
             <span class="img-tag">{{ item.location }}</span>
-            <span class="urgent-tag" v-if="item.isUrgent">急件</span>
+            <span class="fee-rate-badge">{{ formatFeeRate(item.feeRate) }}%</span>
           </div>
 
           <div class="card-info">
             <h3 class="product-name">{{ item.title }}</h3>
 
             <div class="detail-row">
-              <span class="label">代購預算</span>
-              <span class="value price">NT$ {{ formatNumber(item.price) }}</span>
+              <span class="label">商品價格</span>
+              <span class="value price">{{ item.currency }} {{ formatNumber(item.price) }}</span>
             </div>
 
             <div class="detail-row">
               <span class="label">截止日期</span>
-              <span class="value date">{{ item.deadline }}</span>
+              <span class="value date">{{ formatDate(item.deadline) }}</span>
             </div>
 
             <div class="detail-row">
-              <span class="label">酬勞試算</span>
-              <span class="value reward">+ NT$ {{ formatNumber(item.reward) }}</span>
+              <span class="label">報酬</span>
+              <span class="value reward">NT$ {{ formatNumber(item.fee) }}</span>
             </div>
 
             <div class="card-actions">
@@ -92,7 +92,7 @@
     <section class="section-container bg-light">
       <div class="section-header center">
         <h2 class="section-title">熱門代購地區</h2>
-        <p class="section-desc">你正要前往這些地方嗎？看看有什麼順路委託</p>
+        <p class="section-desc">你正要前往這些地方嗎?看看有什麼順路委託</p>
       </div>
 
       <div class="region-grid">
@@ -174,7 +174,7 @@
             <span class="currency-symbol">$</span>
           </div>
           <h3>確認撥款</h3>
-          <p>收到商品無誤，系統撥款</p>
+          <p>收到商品無誤,系統撥款</p>
         </div>
       </div>
     </section>
@@ -192,56 +192,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import {useCommissionStore} from "@/stores/commission";
 
 const router = useRouter();
 
-// 模擬熱門委託資料
-const hotCommissions = ref([
-  {
-    id: 1,
-    title: '大阪環球影城 瑪利歐賽車爆米花桶',
-    price: 1200,
-    reward: 300,
-    location: '大阪',
-    deadline: '2026-03-15',
-    image: 'https://citiesocial.s3.amazonaws.com/apps/campaign/campaign/17555/2249_large.jpg', // 請替換為真實圖片連結
-    isUrgent: true
-  },
-  {
-    id: 2,
-    title: 'New York Perfect Cheese 12入',
-    price: 650,
-    reward: 150,
-    location: '東京',
-    deadline: '2026-03-20',
-    image: 'https://www.kixdutyfree.jp/on/demandware.static/-/Sites-catalog_master_sfcc_krs/default/dw4270ba44/images/large/2123600171_1_b.jpg',
-    isUrgent: false
-  },
-  {
-    id: 3,
-    title: '京都北山 茶之菓 10枚入',
-    price: 880,
-    reward: 200,
-    location: '京都',
-    deadline: '2026-04-01',
-    image: 'https://citiesocial.s3.ap-northeast-1.amazonaws.com/apps/products/product_description_images/20231127/1701051102/1300_%E5%B7%A5%E4%BD%9C%E5%8D%80%E5%9F%9F_1.jpg',
-    isUrgent: false
-  },
-  {
-    id: 4,
-    title: 'Shiro 皂香香水 40ml (限定版)',
-    price: 1500,
-    reward: 350,
-    location: '北海道',
-    deadline: '2026-03-10',
-    image: 'https://mall.iopenmall.tw/website/uploads_product/website_8424/P0842406452732_3_102312204.jpg',
-    isUrgent: true
-  }
-]);
+// 熱門委託資料
+const commissionStore = useCommissionStore();
 
+
+// 組件載入時抓取資料
+onMounted(() => {
+  commissionStore.fetchHotCommissions();
+});
+
+const formatFeeRate = (feeRate: number) => {
+  return Math.round(feeRate)// ✨ 原本是保留一位小數
+};
 const formatNumber = (num: number) => num.toLocaleString();
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('zh-TW');
+};
+
+const getImageUrl = (path: string | null) => {
+  if (!path) return 'https://i.imgur.com/6VBx3io.png';
+  if (path.startsWith('http')) return path;
+  return `http://localhost:5275${path}`;
+};
 
 const filterRegion = (region: string) => {
   router.push({ path: '/commissions', query: { location: region } });
@@ -249,7 +229,6 @@ const filterRegion = (region: string) => {
 </script>
 
 <style scoped>
-/* 全域變數 */
 :root {
   --primary-pink: #fb7299;
   --secondary-blue: #00aeec;
@@ -272,7 +251,6 @@ const filterRegion = (region: string) => {
   justify-content: center;
   color: white;
   text-align: center;
-  //overflow: hidden;
 }
 
 .hero-bg {
@@ -305,7 +283,7 @@ const filterRegion = (region: string) => {
   z-index: 2;
   max-width: 800px;
   padding: 0 20px;
-  margin-bottom: 40px; /* 留給 Stats Bar 空間 */
+  margin-bottom: 40px;
 }
 
 .main-title {
@@ -331,7 +309,7 @@ const filterRegion = (region: string) => {
 
 .action-btn {
   padding: 16px 40px;
-  border-radius: 50px; /* 圓潤按鈕 */
+  border-radius: 50px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
@@ -371,7 +349,7 @@ const filterRegion = (region: string) => {
 /* Stats Bar */
 .stats-bar {
   position: absolute;
-  bottom: -30px; /* 讓它有一半浮在 Hero 外面 */
+  bottom: -30px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
@@ -419,8 +397,9 @@ const filterRegion = (region: string) => {
 
 .section-container.bg-light {
   background-color: #f9f9f9;
-  max-width: 100%; /* 全寬背景 */
+  max-width: 100%;
 }
+
 .section-container.bg-light .section-header,
 .section-container.bg-light .region-grid {
   max-width: 1200px;
@@ -447,6 +426,10 @@ const filterRegion = (region: string) => {
   margin-bottom: 8px;
 }
 
+.center-text {
+  text-align: center;
+}
+
 .section-desc {
   color: #666;
   font-size: 16px;
@@ -468,7 +451,7 @@ const filterRegion = (region: string) => {
   color: white;
 }
 
-/* --- 卡片樣式 (優化自 simple-card) --- */
+/* --- 卡片樣式 --- */
 .commissions-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -495,7 +478,7 @@ const filterRegion = (region: string) => {
 
 .card-img-box {
   position: relative;
-  height: 180px; /* 稍微加高 */
+  height: 180px;
   background: #f8f8f8;
   overflow: hidden;
 }
@@ -523,17 +506,17 @@ const filterRegion = (region: string) => {
   font-weight: bold;
 }
 
-.urgent-tag {
+.fee-rate-badge {
   position: absolute;
   top: 10px;
   right: 10px;
   background: #fb7299;
   color: white;
   padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: bold;
-  box-shadow: 0 2px 5px rgba(251, 114, 153, 0.4);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
 }
 
 .card-info {
@@ -548,7 +531,7 @@ const filterRegion = (region: string) => {
   color: #222;
   margin-bottom: 16px;
   line-height: 1.4;
-  height: 44px; /* 兩行高度 */
+  height: 44px;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -577,7 +560,7 @@ const filterRegion = (region: string) => {
 }
 
 .value.reward {
-  color: #ff9800; /* 強調賺錢的橘金色 */
+  color: #fb7299;
   font-weight: 800;
   font-size: 15px;
 }
@@ -594,7 +577,7 @@ const filterRegion = (region: string) => {
   background: #fb7299;
   color: white;
   border: none;
-  border-radius: 6px; /* 方圓角 */
+  border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
@@ -651,10 +634,10 @@ const filterRegion = (region: string) => {
   font-size: 14px;
   opacity: 0.9;
   margin-top: 4px;
-  color: #fb7299; /* 點綴色 */
+  color: #fb7299;
 }
 
-/* --- 步驟教學 (純 CSS Icon) --- */
+/* --- 步驟教學 --- */
 .steps-wrapper {
   display: flex;
   justify-content: space-between;
@@ -682,6 +665,13 @@ const filterRegion = (region: string) => {
   align-items: center;
   margin-bottom: 20px;
   transition: 0.3s;
+  position: relative;
+}
+
+.currency-symbol {
+  position: absolute;
+  font-size: 32px;
+  font-weight: bold;
 }
 
 .step-item:hover .step-icon {
@@ -694,7 +684,7 @@ const filterRegion = (region: string) => {
   flex: 0 0 100px;
   height: 2px;
   background: #eee;
-  margin-top: 40px; /* 對齊圓圈中心 */
+  margin-top: 40px;
 }
 
 .step-item h3 {

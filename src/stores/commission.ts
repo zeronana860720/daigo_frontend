@@ -10,6 +10,7 @@ export const useCommissionStore = defineStore('commission', {
         currentCommission: null as Commission | null,
         // 存放我接取的委託
         acceptedCommissions: [] as any[],
+        hotCommissions: [] as any[]
     }),
 
     // 2. Actions：用來執行非同步操作（如呼叫 API）的「動作」
@@ -280,6 +281,27 @@ export const useCommissionStore = defineStore('commission', {
                 console.error('審核連線發生錯誤：', error);
                 throw new Error(error.response?.data?.message || '審核程序出錯了');
             }
+        },
+        // ✨ 新增在 actions 裡面
+        async fetchHotCommissions() {
+            this.loading = true;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('http://127.0.0.1:5275/api/Commissions/Hot', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (response.data.success) {
+                    this.hotCommissions = response.data.data;
+                }
+            } catch (error) {
+                console.error('抓取熱門委託失敗:', error);
+            } finally {
+                this.loading = false;
+            }
         }
+
     }
 });
