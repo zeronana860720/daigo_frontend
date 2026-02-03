@@ -9,6 +9,8 @@ interface StoreItem {
     createdAt: string;
     reviewFailCount: number;
     storeDescription: string;
+    location: string;
+    category: string;
 }
 
 export const useStoreStore = defineStore('store', {
@@ -361,18 +363,39 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '啟用賣場失敗' };
             }
+        },
+
+        // 取得所有上架中的商品 (不需要登入)
+        async fetchAllProducts() {
+            this.loading = true;
+            try {
+                const response = await axios.get(
+                    'http://127.0.0.1:5275/api/createstore/allproducts'
+                );
+                console.log(response.data);
+                return response.data;
+            } catch (error: any) {
+                console.error('取得商品列表失敗:', error);
+                throw error.response?.data || { message: '取得商品列表失敗' };
+            } finally {
+                this.loading = false;
+            }
+        },
+        // 在 useStoreStore 裡面加上這個
+        async fetchProductDetail(productId: number) {
+            this.loading = true;
+            try {
+                const response = await axios.get(
+                    `http://127.0.0.1:5275/api/createstore/products/${productId}`
+                );
+                return response.data;
+            } catch (error: any) {
+                console.error('取得商品詳情失敗:', error);
+                throw error.response?.data || { message: '取得商品詳情失敗' };
+            } finally {
+                this.loading = false;
+            }
         }
-
-
-
-
-
-
-
-
-
-
-
 
     }
 });

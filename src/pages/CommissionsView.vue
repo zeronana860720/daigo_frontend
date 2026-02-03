@@ -179,8 +179,8 @@
 /* --- 1. 頁面整體佈局 --- */
 .commissions-page {
   /* 增加寬度以容納側邊欄與四格卡片 */
-  max-width: 95%;
-  margin: 120px auto 40px;
+  max-width: 98%;
+  margin: 110px auto 40px;
   padding: 0 10px;
   /* 使用 flex 讓側邊欄與主內容並排 */
   display: flex;

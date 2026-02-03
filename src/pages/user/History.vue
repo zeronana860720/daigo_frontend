@@ -31,7 +31,7 @@
 
         <div class="btn-group">
           <button class="search-btn" @click="handleSearch" :disabled="isLoading">
-            <span v-if="isLoading" class="loading-icon">⏳</span>
+            <span v-if="isLoading" class="loading-icon"></span>
             {{ isLoading ? '查詢中...' : '查詢紀錄' }}
           </button>
           <button class="clear-btn" @click="handleClear">清除條件</button>
@@ -78,7 +78,7 @@
           <tr v-if="historyList.length === 0">
             <td colspan="7" class="empty-state">
               <div class="empty-content">
-                <span class="empty-icon">🔍</span>
+                <span class="empty-icon"></span>
                 <p v-if="!isLoading">請輸入委託編號並點擊查詢 ( ﾟ∀ﾟ)</p>
                 <p v-else>正在努力翻找紀錄中...</p>
               </div>
