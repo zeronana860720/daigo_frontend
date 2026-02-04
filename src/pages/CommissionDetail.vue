@@ -55,7 +55,14 @@
 
       <div class="action-buttons">
         <button class="add-cart" @click="handleSendMessage">傳送訊息</button>
-        <button class="buy-now" @click="handleAccept">確認接取委託</button>
+        <button
+            class="buy-now"
+            :class="{ 'disabled-btn': new Date() > new Date(commissionStore.currentCommission.deadline) }"
+            :disabled="new Date() > new Date(commissionStore.currentCommission.deadline)"
+            @click="handleAccept"
+        >
+          {{ new Date() > new Date(commissionStore.currentCommission.deadline) ? '已截止' : '確認接取委託' }}
+        </button>
       </div>
 
       <button class="back-link" @click="$router.back()">〈 返回清單頁</button>
@@ -186,24 +193,36 @@ const formatDate = (dateStr: string | null) => {
 }
 
 const handleAccept = async () => {
-  // 1. 先確認資料是否存在，並且取得 ServiceCode
-  const serviceCode = commissionStore.currentCommission?.serviceCode;
-  if (!serviceCode) return;
+  // 1. 先確認資料是否存在
+  const commission = commissionStore.currentCommission;
+  if (!commission?.serviceCode) return;
+
+  // ✨✨✨ 新增這裡：日期檢查守門員 ✨✨✨
+  if (commission.deadline) {
+    const deadlineDate = new Date(commission.deadline).getTime(); // 截止時間
+    const now = Date.now(); // 現在時間
+
+    // 如果 現在時間 > 截止時間，就是過期囉！
+    if (now > deadlineDate) {
+      alert('哎呀！這筆委託已經超過截止日期，無法接單囉 (qwq)');
+      return; // 直接結束，不讓程式往下跑
+    }
+  }
+  // ✨✨✨ 檢查結束 ✨✨✨
 
   // 2. 詢問使用者是否確定要接單
-  if (!confirm(`確定要接取委託「${commissionStore.currentCommission?.title}」嗎？`)) return;
+  if (!confirm(`確定要接取委託「${commission.title}」嗎？`)) return;
 
   try {
     // 3. 呼叫我們剛剛在 Store 寫好的 Action
-    const result = await commissionStore.acceptCommission(serviceCode);
+    const result = await commissionStore.acceptCommission(commission.serviceCode);
 
     if (result.success) {
       alert('恭喜你！接單成功囉 🎉');
-      // 4. 成功後可以重新抓取資料，讓按鈕變色或狀態更新
-      await commissionStore.fetchCommissionDetail(serviceCode);
+      // 4. 成功後可以重新抓取資料
+      await commissionStore.fetchCommissionDetail(commission.serviceCode);
     }
   } catch (err: any) {
-    // 5. 抓取後端傳回來的錯誤訊息（例如：訂單已被接取）
     alert(err.message || '接單失敗，請稍後再試');
   }
 }

@@ -52,8 +52,22 @@
       </div>
 
       <div class="action-buttons">
-        <button class="add-cart">加入購物車</button>
-        <button class="buy-now" @click="buyNow">立即購買</button>
+<!--        <button-->
+<!--            class="add-cart"-->
+<!--            :class="{ 'disabled-btn': isExpired }"-->
+<!--            :disabled="isExpired"-->
+<!--        >-->
+<!--          {{ isExpired ? '加入購物車' : '加入購物車' }}-->
+<!--        </button>-->
+
+        <button
+            class="buy-now"
+            :class="{ 'disabled-btn': isExpired }"
+            :disabled="isExpired"
+            @click="buyNow"
+        >
+          {{ isExpired ? '已截止' : '立即購買' }}
+        </button>
       </div>
 
       <button class="back-link" @click="$router.back()">〈 返回清單頁</button>
@@ -118,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStoreStore } from '@/stores/store'
 
@@ -129,6 +143,11 @@ const storeStore = useStoreStore()
 const product = ref<any>(null)
 const loading = ref(false)
 const storeProductCount = ref(0)
+
+const isExpired = computed(() => {
+  if (!product.value?.deadline) return false
+  return new Date() > new Date(product.value.deadline)
+})
 
 // 格式化數字(加千分位)
 const formatNumber = (num: number) => {
@@ -143,7 +162,15 @@ const formatDate = (dateStr: string) => {
 }
 
 // 立即購買
+// 修改：立即购买函数
 const buyNow = () => {
+  // 1. 先检查是否过期
+  if (isExpired.value) {
+    alert('哎呀！这个商品已经超过截止日期，无法购买啰 (qwq)')
+    return
+  }
+
+  // 2. 原本的跳转逻辑
   if (product.value) {
     router.push(`/checkout/${product.value.id}`)
   }
@@ -546,5 +573,22 @@ onMounted(async () => {
     width: 100%;
     max-width: 100%;
   }
+}
+/* ... 原本的 CSS ... */
+
+/* ✨ 新增：禁用按钮样式 */
+.disabled-btn {
+  background-color: #ccc !important;
+  border-color: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  transform: none !important; /* 移除悬浮动画 */
+  box-shadow: none !important;
+}
+
+/* 确保原本的 hover 效果不会覆盖这个样式 */
+.disabled-btn:hover {
+  background-color: #ccc !important;
+  color: #666 !important;
 }
 </style>
