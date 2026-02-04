@@ -127,6 +127,11 @@ const routes:RouteRecordRaw[] = [
                 path:'store-review',
                 name:'StoreReview',
                 component:()=>import('../pages/user/StoreReview.vue')
+            },
+            {
+                path:'center-view',
+                name:'CenterView',
+                component:()=>import('../pages/user/center.vue')
             }
 
         ]

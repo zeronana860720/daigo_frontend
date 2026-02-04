@@ -31,6 +31,11 @@
             <span class="menu-text">歷史紀錄</span>
           </router-link>
 
+          <router-link to="/user/center-view" class="menu-item">
+            <i class="icon-dot"></i>
+            <span class="menu-text">戰情室</span>
+          </router-link>
+
           <router-link to="/user/shops" class="menu-item">
             <i class="icon-dot"></i>
             <span class="menu-text">賣場管理</span>
