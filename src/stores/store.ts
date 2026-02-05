@@ -540,7 +540,9 @@ export const useStoreStore = defineStore('store', {
             } catch (error: any) {
                 throw error.response?.data || { message: '操作失敗' };
             }
-        }
+        },
+
+
 
 
     }

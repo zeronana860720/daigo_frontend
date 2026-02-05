@@ -54,7 +54,7 @@
         <div
             v-for="item in commissionStore.hotCommissions"
             :key="item.serviceCode"
-            class="simple-card"
+            class="simple-card commission-card-style"
             @click="router.push(`/commissions/${item.serviceCode}`)"
         >
           <div class="card-img-box">
@@ -184,7 +184,41 @@
         <h2 class="section-title">精選現貨</h2>
         <button class="view-more-btn secondary" @click="router.push('/products')">逛逛賣場</button>
       </div>
-      <div class="commissions-grid">
+
+      <div class="product-grid">
+        <div
+            v-for="product in featuredProducts"
+            :key="product.id"
+            class="product-card"
+            @click="router.push(`/product/${product.id}`)"
+        >
+          <div class="card-image-box">
+            <img :src="getImageUrl(product.image)" :alt="product.name" class="product-img-full">
+            <div class="status-tag">現貨</div>
+          </div>
+
+          <div class="product-card-body">
+            <h3 class="product-item-name">{{ product.name }}</h3>
+
+            <div class="product-price-row">
+              <span class="currency">NT$</span>
+              <span class="amount">{{ formatNumber(product.price) }}</span>
+            </div>
+
+            <div class="tags-row">
+              <span class="mini-tag">
+                <i class="icon">📍</i> {{ product.location || '日本' }}
+              </span>
+              <span class="mini-tag secondary">
+                 {{ product.category || '精選' }}
+              </span>
+            </div>
+
+            <button class="view-detail-btn">
+              查看詳情
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -194,28 +228,26 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
-import {useCommissionStore} from "@/stores/commission";
+import { useProductStore } from '@/stores/product';
+import { useCommissionStore } from "@/stores/commission";
 
 const router = useRouter();
-
-// 熱門委託資料
 const commissionStore = useCommissionStore();
+const productStore = useProductStore();
 
+// 用來存放精選商品的變數
+const featuredProducts = ref([]);
 
 // 組件載入時抓取資料
-onMounted(() => {
+onMounted(async () => {
   commissionStore.fetchHotCommissions();
+  featuredProducts.value = await productStore.fetchFeaturedProducts();
 });
 
-const formatFeeRate = (feeRate: number) => {
-  return Math.round(feeRate)// ✨ 原本是保留一位小數
-};
+// 工具函式
+const formatFeeRate = (feeRate: number) => Math.round(feeRate);
 const formatNumber = (num: number) => num.toLocaleString();
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('zh-TW');
-};
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('zh-TW');
 
 const getImageUrl = (path: string | null) => {
   if (!path) return 'https://i.imgur.com/6VBx3io.png';
@@ -242,7 +274,7 @@ const filterRegion = (region: string) => {
   min-height: 100vh;
 }
 
-/* --- Hero Section --- */
+/* ================= Hero Section ================= */
 .hero-section {
   position: relative;
   height: 560px;
@@ -346,7 +378,7 @@ const filterRegion = (region: string) => {
   margin-top: 2px;
 }
 
-/* Stats Bar */
+/* ================= Stats Bar ================= */
 .stats-bar {
   position: absolute;
   bottom: -30px;
@@ -388,7 +420,7 @@ const filterRegion = (region: string) => {
   background: #eee;
 }
 
-/* --- 通用區塊設定 --- */
+/* ================= General Layout ================= */
 .section-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -400,8 +432,10 @@ const filterRegion = (region: string) => {
   max-width: 100%;
 }
 
+/* 讓內層內容回到中間 */
 .section-container.bg-light .section-header,
-.section-container.bg-light .region-grid {
+.section-container.bg-light .region-grid,
+.section-container.bg-light .product-grid {
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -451,7 +485,17 @@ const filterRegion = (region: string) => {
   color: white;
 }
 
-/* --- 卡片樣式 --- */
+.view-more-btn.secondary {
+  border-color: #00aeec;
+  color: #00aeec;
+}
+
+.view-more-btn.secondary:hover {
+  background: #00aeec;
+  color: white;
+}
+
+/* ================= (舊) 委託卡片樣式 ================= */
 .commissions-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -587,7 +631,145 @@ const filterRegion = (region: string) => {
   background: #e85a85;
 }
 
-/* --- 地區方塊 --- */
+/* ================= ✨ (新) 精選商品卡片樣式 ================= */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  border-color: #fb7299;
+  box-shadow: 0 12px 25px rgba(251, 114, 153, 0.15);
+}
+
+.card-image-box {
+  height: 200px; /* 加高一點點 */
+  position: relative;
+  background-color: #f8f8f8;
+  overflow: hidden;
+}
+
+.product-img-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.product-card:hover .product-img-full {
+  transform: scale(1.08);
+}
+
+.status-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #fb7299;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.product-card-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-item-name {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+  line-height: 1.4;
+  height: 44px; /* 限制兩行高度 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: bold;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12px;
+  color: #fb7299;
+}
+
+.product-price-row .currency {
+  font-size: 14px;
+  margin-right: 4px;
+  font-weight: bold;
+}
+
+.product-price-row .amount {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.tags-row {
+  display: flex;
+  flex-direction: column; /* 關鍵：讓它們變兩行 */
+  align-items: flex-start; /* 靠左對齊，不要拉伸到滿版 */
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.mini-tag {
+  font-size: 12px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.mini-tag.secondary {
+  background: #eef7ff;
+  color: #00aeec;
+}
+
+.view-detail-btn {
+  margin-top: auto;
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  color: #fb7299;
+  border: 1px solid #fb7299;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.view-detail-btn:hover {
+  background: #fb7299;
+  color: white;
+}
+
+
+/* ================= Region Grid ================= */
 .region-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -637,7 +819,7 @@ const filterRegion = (region: string) => {
   color: #fb7299;
 }
 
-/* --- 步驟教學 --- */
+/* ================= Steps ================= */
 .steps-wrapper {
   display: flex;
   justify-content: space-between;
@@ -699,9 +881,9 @@ const filterRegion = (region: string) => {
   line-height: 1.6;
 }
 
-/* RWD 響應式 */
+/* ================= RWD ================= */
 @media (max-width: 1024px) {
-  .commissions-grid, .region-grid {
+  .commissions-grid, .region-grid, .product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -730,7 +912,7 @@ const filterRegion = (region: string) => {
   .step-line {
     display: none;
   }
-  .commissions-grid, .region-grid {
+  .commissions-grid, .region-grid, .product-grid {
     grid-template-columns: 1fr;
   }
 }

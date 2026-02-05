@@ -55,14 +55,14 @@
       <div class="dashboard-card">
         <h3 class="card-title">接取委託熱點地圖</h3>
         <div class="image-container map-container">
-<!--          <img src="" alt="接委託地圖" class="chart-img">-->
+          <img src="/all_commissions.jpg" alt="接委託地圖" class="chart-img">
         </div>
       </div>
 
       <div class="dashboard-card">
-        <h3 class="card-title">已完成委託分佈地圖</h3>
+        <h3 class="card-title">全部委託（包含已完成）</h3>
         <div class="image-container map-container">
-<!--          <img src="/map_completed.png" alt="已完成地圖" class="chart-img">-->
+          <img src="/other.jpg" alt="已完成地圖" class="chart-img">
         </div>
       </div>
 

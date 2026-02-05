@@ -197,30 +197,28 @@ const handleAccept = async () => {
   const commission = commissionStore.currentCommission;
   if (!commission?.serviceCode) return;
 
-  // ✨✨✨ 新增這裡：日期檢查守門員 ✨✨✨
+  // ... (中間的日期檢查邏輯保持不變) ...
   if (commission.deadline) {
-    const deadlineDate = new Date(commission.deadline).getTime(); // 截止時間
-    const now = Date.now(); // 現在時間
-
-    // 如果 現在時間 > 截止時間，就是過期囉！
+    const deadlineDate = new Date(commission.deadline).getTime();
+    const now = Date.now();
     if (now > deadlineDate) {
       alert('哎呀！這筆委託已經超過截止日期，無法接單囉 (qwq)');
-      return; // 直接結束，不讓程式往下跑
+      return;
     }
   }
-  // ✨✨✨ 檢查結束 ✨✨✨
 
   // 2. 詢問使用者是否確定要接單
   if (!confirm(`確定要接取委託「${commission.title}」嗎？`)) return;
 
   try {
-    // 3. 呼叫我們剛剛在 Store 寫好的 Action
+    // 3. 呼叫 Store 動作
     const result = await commissionStore.acceptCommission(commission.serviceCode);
 
     if (result.success) {
       alert('恭喜你！接單成功囉 🎉');
-      // 4. 成功後可以重新抓取資料
-      await commissionStore.fetchCommissionDetail(commission.serviceCode);
+
+      // ✨✨✨ 修改這裡：接單成功後，跳轉回委託清單頁面 ✨✨✨
+      router.push('/commissions');
     }
   } catch (err: any) {
     alert(err.message || '接單失敗，請稍後再試');
