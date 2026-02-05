@@ -44,7 +44,7 @@
       <div class="filter-group">
         <h4 class="group-title">排序方式</h4>
         <select v-model="currentSort" class="styled-select" @change="handleFilterSearch">
-          <option value="">報酬率：高到低</option>
+          <option value="fee_rate_desc">報酬率：高到低</option>
           <option value="price_asc">價格：低到高</option>
           <option value="price_desc">價格：高到低</option>
           <option value="deadline_asc">截止日：近到遠</option>
@@ -116,7 +116,7 @@ const commissionStore = useCommissionStore();
 
 // --- 狀態變數 ---
 const searchKeyword = ref((route.query.keyword as string) || '');
-const currentSort = ref('');
+const currentSort = ref('fee_rate_desc');
 const filterLocations = ref<string>(''); // 這裡存的是 "tokyo,東京" 這樣的字串
 const minPrice = ref<number | null>(null);
 const maxPrice = ref<number | null>(null);
@@ -191,7 +191,7 @@ const selectLocation = (val: string) => {
 // --- 清空篩選條件 ---
 const resetFilters = () => {
   searchKeyword.value = '';
-  currentSort.value = '';
+  currentSort.value = 'fee_rate_desc';
   filterLocations.value = ''; // 清空地點
   minPrice.value = null;
   maxPrice.value = null;
