@@ -89,9 +89,6 @@ travel-shopper-frontend/
 
 歡迎提交 Issue 或 Pull Request！
 
-## 📄 授權
-
-[MIT License](LICENSE)
 
 ## 👤 作者
 
