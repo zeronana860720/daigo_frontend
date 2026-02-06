@@ -1,4 +1,4 @@
-# 🛒 Proxy Buy Platform (Frontend)
+# travel-shopper (Frontend)
 
 > 一個基於 Vue.js 的跨境代購平台，連接買家與旅客，實現跨國商品購買服務
 
