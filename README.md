@@ -6,7 +6,7 @@
 [![Vite](https://img.shields.io/badge/Vite-Latest-646CFF?logo=vite)](https://vitejs.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## 📖 專案簡介
+## 專案簡介
 
 Proxy Buy Platform 是一個現代化的跨境代購服務平台前端專案，讓使用者能輕鬆發布代購需求或提供代購服務。本專案展示了現代前端開發的最佳實踐，包含 Google Maps API 整合、狀態管理及與 .NET Core 後端的完整串接。
 
